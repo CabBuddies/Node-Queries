@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResponseRoutes = exports.TagRoutes = exports.OpinionRoutes = exports.CommentRoutes = exports.QueryRoutes = void 0;
+const query_routes_1 = require("./query.routes");
+exports.QueryRoutes = query_routes_1.default;
+const comment_routes_1 = require("./comment.routes");
+exports.CommentRoutes = comment_routes_1.default;
+const opinion_routes_1 = require("./opinion.routes");
+exports.OpinionRoutes = opinion_routes_1.default;
+const tag_routes_1 = require("./tag.routes");
+exports.TagRoutes = tag_routes_1.default;
+const response_routes_1 = require("./response.routes");
+exports.ResponseRoutes = response_routes_1.default;

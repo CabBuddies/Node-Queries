@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResponseController = exports.TagController = exports.OpinionController = exports.CommentController = exports.QueryController = void 0;
+const query_controller_1 = require("./query.controller");
+exports.QueryController = query_controller_1.default;
+const comment_controller_1 = require("./comment.controller");
+exports.CommentController = comment_controller_1.default;
+const opinion_controller_1 = require("./opinion.controller");
+exports.OpinionController = opinion_controller_1.default;
+const tag_controller_1 = require("./tag.controller");
+exports.TagController = tag_controller_1.default;
+const response_controller_1 = require("./response.controller");
+exports.ResponseController = response_controller_1.default;

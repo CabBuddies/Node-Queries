@@ -1,0 +1,185 @@
+###
+# @name signInAPI
+
+POST http://localhost:4000/api/v1/auth/sign_in
+Content-Type: application/json
+
+{
+    "email":"nihal+test1@cabbuddies.com",
+    "password":"strong"
+}
+
+###
+
+@accessToken = {{signInAPI.response.body.$.accessToken.value}}
+@refreshToken = {{signInAPI.response.body.$.refreshToken.value}}
+
+###
+
+POST http://localhost:4001/api/v1/query
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "draft":{
+        "title":"  Q T 1  ",
+        "body":"Q B 1",
+        "tags":["T1","T2","T3","T3","T2",null]
+    },
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger"
+        },
+        "places":["San Jose","SFO"]
+    },
+    "author":"admin"
+}
+
+###
+
+GET http://localhost:4001/api/v1/query
+Content-Type: application/json
+
+{
+    "query":{
+        "$or":[
+            {
+                "status":"published"
+            },
+            {
+                "status":"draft"
+            }
+        ]
+    },
+    "sort":{
+        "createdAt":1
+    },
+    "attributes":{
+        "draft.title":1,
+        "published.title":1,
+        "stats":1,
+        "password":1,
+        "createdAt":1
+    }
+}
+###
+
+PUT http://localhost:4001/api/v1/query/5f5beccfb8b06f3c52344303
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "draft":{
+        "title":"  Q T 1  ",
+        "body":"Q B 1",
+        "tags":["T1","T2","T3","T3","T2",null]
+    },
+    "status":"published"
+}
+
+
+###
+
+DELETE http://localhost:4001/api/v1/query/5f5a8fb58dd4952b66bda8ad
+Authorization: Access {{accessToken}}
+
+###
+
+POST http://localhost:4001/api/v1/response
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "title":"R T 1",
+    "body":"R B 1",
+    "queryId":"5f5beccfb8b06f3c52344303",
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger"
+        }
+    }
+}
+
+###
+
+GET http://localhost:4001/api/v1/response
+
+###
+
+PUT http://localhost:4001/api/v1/response/5f5a6f2e2150e529e0ede7c9
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "title":"sample response title 3",
+    "body":"sample response body 3",
+    "status":"published"
+}
+
+###
+
+POST http://localhost:4001/api/v1/comment
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "body":"sample comment body 1",
+    "responseId":"5f5bee7de0cd343ce8ea4ebe",
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger"
+        }
+    }
+}
+
+###
+
+GET http://localhost:4001/api/v1/comment
+
+
+###
+
+PUT http://localhost:4001/api/v1/comment/5f5a72a3d47f272a2043f6b8
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "body":"sample comment body 3 updated",
+    "queryId":"5f59d9f8c0561520f404e162",
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger2"
+        }
+    }
+}
+
+###
+
+POST http://localhost:4001/api/v1/opinion
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+{
+    "body":"blahblah",
+    "opinionType":"upvote",
+    "queryId":"5f59d9f8c0561520f404e162",
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger2"
+        }
+    }
+}
+
+###
+
+GET http://localhost:4001/api/v1/opinion
+
+###
+
+DELETE http://localhost:4001/api/v1/opinion/5f5a7c6e6c297f2b00b735db
+Authorization: Access {{accessToken}}
