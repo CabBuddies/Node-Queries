@@ -42,6 +42,8 @@ class CommentService extends AuthorService {
 
         data.author = request.getUserId();
 
+        data = Helpers.JSON.normalizeJson(data);
+
         console.log('comment.service','db insert',data);
 
         data = await this.repository.create(data);
