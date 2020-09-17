@@ -20,58 +20,43 @@ class OpinionService extends AuthorService {
         return OpinionService.instance;
     }
 
-    create = async(request:Helpers.Request,bodyP) => {
-        console.log('opinion.service',request,bodyP);
+    create = async(request:Helpers.Request,data) => {
+        console.log('opinion.service',request,data);
 
-        let {
-            queryId,
-            responseId,
-            body,
-            opinionType,
-            customAttributes
-        } = bodyP
-
-        if(queryId){
-            const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,queryId)
+        if(data.queryId){
+            const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,data.queryId)
             if(!queryIdExists)
                 throw this.buildError(404,'queryId not available')
-            responseId = undefined;
-        }else if(responseId){
-            const responseIdExists = await Services.Binder.boundFunction(BinderNames.RESPONSE.CHECK.ID_EXISTS)(request,responseId)
+            delete data.responseId;
+        }else if(data.responseId){
+            const responseIdExists = await Services.Binder.boundFunction(BinderNames.RESPONSE.CHECK.ID_EXISTS)(request,data.responseId)
             if(!responseIdExists)
                 throw this.buildError(404,'responseId not available')
         }else{
             throw this.buildError(400,'queryId or responseId not provided')
         }
 
+        data.author = request.getUserId();
+
         let response = await this.getAll(request,{
-            author:request.getUserId(),
-            queryId,
-            responseId,
+            author:data.author,
+            queryId:data.queryId,
+            responseId:data.responseId,
         },100);
 
         if(response.resultSize>0){
             for(const opinion of response.result){
-                if(opinionType === opinion.opinionType){
+                if(data.opinionType === opinion.opinionType){
                     throw this.buildError(200,opinion);
                 }
                 if(
-                    (opinionType === 'upvote' && opinion.opinionType === 'downvote')
+                    (data.opinionType === 'upvote' && opinion.opinionType === 'downvote')
                     ||
-                    (opinionType === 'downvote' && opinion.opinionType === 'upvote')
+                    (data.opinionType === 'downvote' && opinion.opinionType === 'upvote')
                 ){
                     await this.delete(request,opinion._id);
                 }
             }
-        }
-
-        let data :any = {
-            author:request.getUserId(),
-            queryId,
-            responseId,
-            body,
-            opinionType,
-            customAttributes
         }
 
         data = Helpers.JSON.normalizeJson(data);

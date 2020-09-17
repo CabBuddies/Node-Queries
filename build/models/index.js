@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = exports.Tag = exports.Opinion = exports.Comment = exports.Response = exports.Query = void 0;
+const mongoose = require("mongoose");
+const Str = mongoose.Schema.Types.String;
+Str.checkRequired(v => v != null);
 const query_model_1 = require("./query.model");
 exports.Query = query_model_1.default;
 const response_model_1 = require("./response.model");

@@ -19,33 +19,17 @@ class QueryService extends stats_service_1.default {
         super(new repositories_1.QueryRepository());
         this.create = (request, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('query.service', request, bodyP);
-            // let {
-            //     title,
-            //     body,
-            //     tags,
-            //     customAttributes,
-            //     status
-            // } = bodyP
-            // status = status || 'draft';
-            // if(['draft','published'].indexOf(status) === -1){
-            //     throw this.buildError(400);
-            // }
-            // let data :any = {
-            //     author:request.getUserId(),
-            //     customAttributes,
-            //     status,
-            //     stats:{}
-            // }
-            // data[status] = {
-            //     title,
-            //     body,
-            //     tags,
-            //     lastModifiedAt:Date.now()
-            // }
-            bodyP = node_library_1.Helpers.JSON.normalizeJson(bodyP);
-            bodyP.author = request.getUserId();
-            console.log('query.service', 'db insert', bodyP);
-            const data = yield this.repository.create(bodyP);
+            let data = bodyP;
+            data.author = request.getUserId();
+            if (data.status === 'published') {
+                data.draft = {
+                    title: '',
+                    body: '',
+                    tags: []
+                };
+            }
+            console.log('query.service', 'db insert', data);
+            data = yield this.repository.create(bodyP);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.QUERY.CREATED,
@@ -54,35 +38,35 @@ class QueryService extends stats_service_1.default {
             console.log('query.service', 'published message');
             return data;
         });
-        this.update = (request, entityId, bodyP) => __awaiter(this, void 0, void 0, function* () {
+        this.getAll = (request, query = {}, sort = {}, pageSize = 5, pageNum = 1, attributes = []) => __awaiter(this, void 0, void 0, function* () {
+            const exposableAttributes = ['author', 'published.title', 'published.tags', 'published.lastModifiedAt', 'createdAt', 'status', 'stats', 'access.type'];
+            if (attributes.length === 0)
+                attributes = exposableAttributes;
+            else
+                attributes = attributes.filter(function (el) {
+                    return exposableAttributes.includes(el);
+                });
+            return this.repository.getAll(query, sort, pageSize, pageNum, attributes);
+        });
+        this.update = (request, documentId, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('query.service', request, bodyP);
-            let { title, body, tags, customAttributes, status } = bodyP;
-            let data = {
-                customAttributes
-            };
-            if (status) {
-                if (['draft', 'published'].indexOf(status) === -1) {
-                    throw this.buildError(400);
-                }
-                if (status === 'published') {
-                    data.status = 'published';
-                    data.draft = {
-                        title: '',
-                        body: '',
-                        tags: [],
-                        lastModifiedAt: new Date()
-                    };
-                }
-                data[status] = {
-                    title,
-                    body,
-                    tags,
-                    lastModifiedAt: new Date()
+            let data = bodyP;
+            if (data.status === 'published') {
+                data.draft = {
+                    title: '',
+                    body: '',
+                    tags: []
                 };
             }
-            data = node_library_1.Helpers.JSON.normalizeJson(data);
+            else {
+                delete data.status;
+            }
+            data[data.status] = {
+                lastModifiedAt: new Date()
+            };
+            //data = Helpers.JSON.normalizeJson(data);
             console.log('query.service', 'db update', data);
-            data = yield this.repository.updatePartial(entityId, data);
+            data = yield this.repository.updatePartial(documentId, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.QUERY.UPDATED,
@@ -90,11 +74,11 @@ class QueryService extends stats_service_1.default {
             });
             return data;
         });
-        this.delete = (request, entityId) => __awaiter(this, void 0, void 0, function* () {
+        this.delete = (request, documentId) => __awaiter(this, void 0, void 0, function* () {
             let data = {
                 status: 'deleted'
             };
-            data = yield this.repository.updatePartial(entityId, data);
+            data = yield this.repository.updatePartial(documentId, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.QUERY.DELETED,
@@ -102,6 +86,26 @@ class QueryService extends stats_service_1.default {
             });
             return data;
         });
+        this.deepEqual = (x, y) => {
+            if (x === y) {
+                return true;
+            }
+            else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
+                if (Object.keys(x).length != Object.keys(y).length)
+                    return false;
+                for (var prop in x) {
+                    if (y.hasOwnProperty(prop)) {
+                        if (!this.deepEqual(x[prop], y[prop]))
+                            return false;
+                    }
+                    else
+                        return false;
+                }
+                return true;
+            }
+            else
+                return false;
+        };
         node_library_1.Services.Binder.bindFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS, this.checkIdExists);
     }
     static getInstance() {

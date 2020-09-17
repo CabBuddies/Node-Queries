@@ -19,68 +19,56 @@ class ResponseService extends stats_service_1.default {
         super(new repositories_1.ResponseRepository());
         this.create = (request, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('response.service', request, bodyP);
-            let { queryId, title, body, customAttributes, status } = bodyP;
-            if (!queryId)
-                throw this.buildError(400);
-            const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, queryId);
-            console.log('response.service', 'queryIdExists', queryIdExists);
+            const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, bodyP.queryId);
+            console.log('response.service', 'responseIdExists', queryIdExists);
             if (!queryIdExists)
                 throw this.buildError(404);
-            status = status || 'draft';
-            if (['draft', 'published'].indexOf(status) === -1) {
-                throw this.buildError(400);
+            let data = bodyP;
+            data.author = request.getUserId();
+            if (data.status === 'published') {
+                data.draft = {
+                    title: '',
+                    body: ''
+                };
             }
-            let data = {
-                author: request.getUserId(),
-                queryId,
-                customAttributes,
-                status,
-                stats: {}
-            };
-            data[status] = {
-                title,
-                body,
-                lastModifiedAt: Date.now()
-            };
-            data = node_library_1.Helpers.JSON.normalizeJson(data);
-            console.log('response.service', 'db insert', data);
+            console.log('query.service', 'db insert', data);
             data = yield this.repository.create(data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.RESPONSE.CREATED,
                 data
             });
-            console.log('response.service', 'published message');
+            console.log('query.service', 'published message');
             return data;
         });
-        this.update = (request, entityId, bodyP) => __awaiter(this, void 0, void 0, function* () {
+        this.getAll = (request, query = {}, sort = {}, pageSize = 5, pageNum = 1, attributes = []) => __awaiter(this, void 0, void 0, function* () {
+            const exposableAttributes = ['author', 'queryId', 'published.title', 'published.tags', 'published.lastModifiedAt', 'createdAt', 'status', 'stats', 'access.type'];
+            if (attributes.length === 0)
+                attributes = exposableAttributes;
+            else
+                attributes = attributes.filter(function (el) {
+                    return exposableAttributes.includes(el);
+                });
+            return this.repository.getAll(query, sort, pageSize, pageNum, attributes);
+        });
+        this.update = (request, documentId, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('response.service', request, bodyP);
-            let { title, body, customAttributes, status } = bodyP;
-            let data = {
-                customAttributes
-            };
-            if (status) {
-                if (['draft', 'published'].indexOf(status) === -1) {
-                    throw this.buildError(400);
-                }
-                if (status === 'published') {
-                    data.status = 'published';
-                    data.draft = {
-                        title: '',
-                        body: '',
-                        tags: [],
-                        lastModifiedAt: new Date()
-                    };
-                }
-                data[status] = {
-                    title,
-                    body,
-                    lastModifiedAt: new Date()
+            let data = bodyP;
+            if (data.status === 'published') {
+                data.draft = {
+                    title: '',
+                    body: ''
                 };
             }
-            data = node_library_1.Helpers.JSON.normalizeJson(data);
+            else {
+                delete data.status;
+            }
+            data[data.status] = {
+                lastModifiedAt: new Date()
+            };
+            //data = Helpers.JSON.normalizeJson(data);
             console.log('response.service', 'db update', data);
-            data = yield this.repository.updatePartial(entityId, data);
+            data = yield this.repository.updatePartial(documentId, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.RESPONSE.UPDATED,
@@ -88,11 +76,11 @@ class ResponseService extends stats_service_1.default {
             });
             return data;
         });
-        this.delete = (request, entityId) => __awaiter(this, void 0, void 0, function* () {
+        this.delete = (request, documentId) => __awaiter(this, void 0, void 0, function* () {
             let data = {
                 status: 'deleted'
             };
-            data = yield this.repository.updatePartial(entityId, data);
+            data = yield this.repository.updatePartial(documentId, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.RESPONSE.DELETED,

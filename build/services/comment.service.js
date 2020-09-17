@@ -19,16 +19,15 @@ class CommentService extends author_service_1.default {
         super(new repositories_1.CommentRepository());
         this.create = (request, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('comment.service', request, bodyP);
-            let { queryId, responseId, body, customAttributes } = bodyP;
-            if (queryId) {
-                const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, queryId);
+            if (bodyP.queryId) {
+                const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, bodyP.queryId);
                 console.log('comment.service', 'create', 'queryIdExists', queryIdExists);
                 if (!queryIdExists)
                     throw this.buildError(404, 'queryId not available');
-                responseId = undefined;
+                delete bodyP.responseId;
             }
-            else if (responseId) {
-                const responseIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.RESPONSE.CHECK.ID_EXISTS)(request, responseId);
+            else if (bodyP.responseId) {
+                const responseIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.RESPONSE.CHECK.ID_EXISTS)(request, bodyP.responseId);
                 console.log('comment.service', 'create', 'responseIdExists', responseIdExists);
                 if (!responseIdExists)
                     throw this.buildError(404, 'responseId not available');
@@ -36,14 +35,8 @@ class CommentService extends author_service_1.default {
             else {
                 throw this.buildError(400, 'queryId or responseId not provided');
             }
-            let data = {
-                author: request.getUserId(),
-                queryId,
-                responseId,
-                body,
-                customAttributes
-            };
-            data = node_library_1.Helpers.JSON.normalizeJson(data);
+            let data = bodyP;
+            data.author = request.getUserId();
             console.log('comment.service', 'db insert', data);
             data = yield this.repository.create(data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
@@ -54,16 +47,12 @@ class CommentService extends author_service_1.default {
             console.log('comment.service', 'published message');
             return data;
         });
-        this.update = (request, entityId, bodyP) => __awaiter(this, void 0, void 0, function* () {
+        this.update = (request, documentId, bodyP) => __awaiter(this, void 0, void 0, function* () {
             console.log('comment.service', request, bodyP);
-            let { body, customAttributes } = bodyP;
-            let data = {
-                body,
-                customAttributes
-            };
+            let data = bodyP;
             data = node_library_1.Helpers.JSON.normalizeJson(data);
             console.log('comment.service', 'db update', data);
-            data = yield this.repository.updatePartial(entityId, data);
+            data = yield this.repository.updatePartial(documentId, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.COMMENT.UPDATED,
@@ -71,8 +60,8 @@ class CommentService extends author_service_1.default {
             });
             return data;
         });
-        this.delete = (request, entityId) => __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.repository.delete(entityId);
+        this.delete = (request, documentId) => __awaiter(this, void 0, void 0, function* () {
+            let data = yield this.repository.delete(documentId);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.COMMENT.DELETED,

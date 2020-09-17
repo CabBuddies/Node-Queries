@@ -26,6 +26,10 @@ Content-Type: application/json
         "body":"Q B 1",
         "tags":["T1","T2","T3","T3","T2",null]
     },
+    "published":{
+        "title":"",
+        "body":""
+    },
     "customAttributes":{
         "random":"value",
         "superRandom":{
@@ -33,7 +37,8 @@ Content-Type: application/json
         },
         "places":["San Jose","SFO"]
     },
-    "author":"admin"
+    "author":"admin",
+    "hazard":"hack"
 }
 
 ###
@@ -53,21 +58,26 @@ Content-Type: application/json
         ]
     },
     "sort":{
-        "createdAt":1
+        "createdAt":-1
     },
-    "attributes":{
-        "draft.title":1,
-        "published.title":1,
-        "stats":1,
-        "password":1,
-        "createdAt":1
-    }
+    "attributes":[
+        "draft.title",
+        "published.title",
+        "published.body",
+        "published.tags",
+        "published.lastModifiedAt",
+        "acsess.type",
+        "stats",
+        "password",
+        "createdAt"
+    ]
 }
 ###
 
-PUT http://localhost:4001/api/v1/query/5f5beccfb8b06f3c52344303
+PUT http://localhost:4001/api/v1/query/5f62ac612bdaa8816fb94652
 Authorization: Access {{accessToken}}
 Content-Type: application/json
+
 
 {
     "draft":{
@@ -75,13 +85,27 @@ Content-Type: application/json
         "body":"Q B 1",
         "tags":["T1","T2","T3","T3","T2",null]
     },
-    "status":"published"
+    "published":{
+        "title":"   Random Title   ",
+        "body":"  Random Body ",
+        "tags":["T1","T2","T3","T3","T2",null]
+    },
+    "customAttributes":{
+        "random":"value",
+        "superRandom":{
+            "value":"stranger"
+        },
+        "places2":["San Jose","SFO","UFC"]
+    },
+    "status":"published",
+    "author":"admin",
+    "hazard":"hack"
 }
 
 
 ###
 
-DELETE http://localhost:4001/api/v1/query/5f5a8fb58dd4952b66bda8ad
+DELETE http://localhost:4001/api/v1/query/5f62ac612bdaa8816fb94652
 Authorization: Access {{accessToken}}
 
 ###

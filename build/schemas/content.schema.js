@@ -4,11 +4,13 @@ const mongoose = require("mongoose");
 const contentSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: 'title is required'
+        required: 'title is required',
+        minimize: false
     },
     body: {
         type: String,
-        required: 'body is required'
+        required: 'body is required',
+        minimize: false
     },
     tags: [
         String

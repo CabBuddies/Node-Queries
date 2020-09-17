@@ -24,41 +24,21 @@ class QueryService extends StatsService {
     create = async(request:Helpers.Request,bodyP) => {
         console.log('query.service',request,bodyP);
 
-        // let {
-        //     title,
-        //     body,
-        //     tags,
-        //     customAttributes,
-        //     status
-        // } = bodyP
+        let data:any = bodyP;
 
-        // status = status || 'draft';
+        data.author = request.getUserId();
 
-        // if(['draft','published'].indexOf(status) === -1){
-        //     throw this.buildError(400);
-        // }
+        if(data.status === 'published'){
+            data.draft = {
+                title:'',
+                body:'',
+                tags:[]
+            };
+        }
 
-        // let data :any = {
-        //     author:request.getUserId(),
-        //     customAttributes,
-        //     status,
-        //     stats:{}
-        // }
+        console.log('query.service','db insert',data);
 
-        // data[status] = {
-        //     title,
-        //     body,
-        //     tags,
-        //     lastModifiedAt:Date.now()
-        // }
-
-        bodyP = Helpers.JSON.normalizeJson(bodyP);
-
-        bodyP.author = request.getUserId();
-
-        console.log('query.service','db insert',bodyP);
-
-        const data = await this.repository.create(bodyP);
+        data = await this.repository.create(bodyP);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -71,50 +51,41 @@ class QueryService extends StatsService {
         return data;
     }
 
-    update = async(request:Helpers.Request,entityId,bodyP) => {
+    getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
+        const exposableAttributes = ['author','published.title','published.tags','published.lastModifiedAt','createdAt','status','stats','access.type'];
+        if(attributes.length === 0)
+            attributes = exposableAttributes;
+        else
+            attributes = attributes.filter( function( el:string ) {
+                return exposableAttributes.includes( el );
+            });
+        return this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+    }
+
+    update = async(request:Helpers.Request,documentId:string,bodyP) => {
         console.log('query.service',request,bodyP);
-        let {
-            title,
-            body,
-            tags,
-            customAttributes,
-            status
-        } = bodyP
 
-        let data :any = {
-            customAttributes
+        let data :any = bodyP
+
+        if(data.status === 'published'){
+            data.draft = {
+                title:'',
+                body:'',
+                tags:[]
+            };
+        }else{
+            delete data.status
         }
 
-        if(status){
-
-            if(['draft','published'].indexOf(status) === -1){
-                throw this.buildError(400);
-            }
-
-            if(status === 'published'){
-                data.status = 'published';
-                data.draft = {
-                    title:'',
-                    body:'',
-                    tags:[],
-                    lastModifiedAt:new Date()
-                };
-            }
-
-            data[status] = {
-                title,
-                body,
-                tags,
-                lastModifiedAt:new Date()
-            }
-            
+        data[data.status] = {
+            lastModifiedAt:new Date()
         }
 
-        data = Helpers.JSON.normalizeJson(data);
+        //data = Helpers.JSON.normalizeJson(data);
 
         console.log('query.service','db update',data);
 
-        data = await this.repository.updatePartial(entityId,data);
+        data = await this.repository.updatePartial(documentId,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -125,12 +96,12 @@ class QueryService extends StatsService {
         return data;
     }
 
-    delete = async(request:Helpers.Request,entityId) => {
+    delete = async(request:Helpers.Request,documentId:string) => {
         let data :any = {
             status:'deleted'
         }
 
-        data = await this.repository.updatePartial(entityId,data);
+        data = await this.repository.updatePartial(documentId,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -140,6 +111,30 @@ class QueryService extends StatsService {
 
         return data;
     }
+
+    deepEqual =  (x, y) => {
+        if (x === y) {
+          return true;
+        }
+        else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
+          if (Object.keys(x).length != Object.keys(y).length)
+            return false;
+      
+          for (var prop in x) {
+            if (y.hasOwnProperty(prop))
+            {  
+              if (! this.deepEqual(x[prop], y[prop]))
+                return false;
+            }
+            else
+              return false;
+          }
+      
+          return true;
+        }
+        else 
+          return false;
+      }
 
 }
 

@@ -17,48 +17,40 @@ const binder_helper_1 = require("../helpers/binder.helper");
 class OpinionService extends author_service_1.default {
     constructor() {
         super(new repositories_1.OpinionRepository());
-        this.create = (request, bodyP) => __awaiter(this, void 0, void 0, function* () {
-            console.log('opinion.service', request, bodyP);
-            let { queryId, responseId, body, opinionType, customAttributes } = bodyP;
-            if (queryId) {
-                const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, queryId);
+        this.create = (request, data) => __awaiter(this, void 0, void 0, function* () {
+            console.log('opinion.service', request, data);
+            if (data.queryId) {
+                const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, data.queryId);
                 if (!queryIdExists)
                     throw this.buildError(404, 'queryId not available');
-                responseId = undefined;
+                delete data.responseId;
             }
-            else if (responseId) {
-                const responseIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.RESPONSE.CHECK.ID_EXISTS)(request, responseId);
+            else if (data.responseId) {
+                const responseIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.RESPONSE.CHECK.ID_EXISTS)(request, data.responseId);
                 if (!responseIdExists)
                     throw this.buildError(404, 'responseId not available');
             }
             else {
                 throw this.buildError(400, 'queryId or responseId not provided');
             }
+            data.author = request.getUserId();
             let response = yield this.getAll(request, {
-                author: request.getUserId(),
-                queryId,
-                responseId,
+                author: data.author,
+                queryId: data.queryId,
+                responseId: data.responseId,
             }, 100);
             if (response.resultSize > 0) {
                 for (const opinion of response.result) {
-                    if (opinionType === opinion.opinionType) {
+                    if (data.opinionType === opinion.opinionType) {
                         throw this.buildError(200, opinion);
                     }
-                    if ((opinionType === 'upvote' && opinion.opinionType === 'downvote')
+                    if ((data.opinionType === 'upvote' && opinion.opinionType === 'downvote')
                         ||
-                            (opinionType === 'downvote' && opinion.opinionType === 'upvote')) {
+                            (data.opinionType === 'downvote' && opinion.opinionType === 'upvote')) {
                         yield this.delete(request, opinion._id);
                     }
                 }
             }
-            let data = {
-                author: request.getUserId(),
-                queryId,
-                responseId,
-                body,
-                opinionType,
-                customAttributes
-            };
             data = node_library_1.Helpers.JSON.normalizeJson(data);
             console.log('opinion.service', 'db insert', data);
             data = yield this.repository.create(data);

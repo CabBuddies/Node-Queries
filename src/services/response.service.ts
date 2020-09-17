@@ -24,48 +24,25 @@ class ResponseService extends StatsService {
     create = async(request:Helpers.Request,bodyP) => {
         console.log('response.service',request,bodyP);
 
-        let {
-            queryId,
-            title,
-            body,
-            customAttributes,
-            status
-        } = bodyP
+        const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,bodyP.queryId)
 
-        if(!queryId)
-            throw this.buildError(400);
-
-        const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,queryId)
-
-        console.log('response.service','queryIdExists',queryIdExists);
+        console.log('response.service','responseIdExists',queryIdExists);
 
         if(!queryIdExists)
             throw this.buildError(404);
 
+        let data:any = bodyP;
 
-        status = status || 'draft';
+        data.author = request.getUserId();
 
-        if(['draft','published'].indexOf(status) === -1){
-            throw this.buildError(400);
+        if(data.status === 'published'){
+            data.draft = {
+                title:'',
+                body:''
+            };
         }
 
-        let data :any = {
-            author:request.getUserId(),
-            queryId,
-            customAttributes,
-            status,
-            stats:{}
-        }
-
-        data[status] = {
-            title,
-            body,
-            lastModifiedAt:Date.now()
-        }
-
-        data = Helpers.JSON.normalizeJson(data);
-
-        console.log('response.service','db insert',data);
+        console.log('query.service','db insert',data);
 
         data = await this.repository.create(data);
 
@@ -75,53 +52,44 @@ class ResponseService extends StatsService {
             data
         });
 
-        console.log('response.service','published message');
+        console.log('query.service','published message');
 
         return data;
     }
 
-    update = async(request:Helpers.Request,entityId,bodyP) => {
+    getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
+        const exposableAttributes = ['author','queryId','published.title','published.tags','published.lastModifiedAt','createdAt','status','stats','access.type'];
+        if(attributes.length === 0)
+            attributes = exposableAttributes;
+        else
+            attributes = attributes.filter( function( el:string ) {
+                return exposableAttributes.includes( el );
+            });
+        return this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+    }
+
+    update = async(request:Helpers.Request,documentId,bodyP) => {
         console.log('response.service',request,bodyP);
-        let {
-            title,
-            body,
-            customAttributes,
-            status
-        } = bodyP
+        let data :any = bodyP
 
-        let data :any = {
-            customAttributes
+        if(data.status === 'published'){
+            data.draft = {
+                title:'',
+                body:''
+            };
+        }else{
+            delete data.status
         }
 
-        if(status){
-
-            if(['draft','published'].indexOf(status) === -1){
-                throw this.buildError(400);
-            }
-
-            if(status === 'published'){
-                data.status = 'published';
-                data.draft = {
-                    title:'',
-                    body:'',
-                    tags:[],
-                    lastModifiedAt:new Date()
-                };
-            }
-
-            data[status] = {
-                title,
-                body,
-                lastModifiedAt:new Date()
-            }
-            
+        data[data.status] = {
+            lastModifiedAt:new Date()
         }
 
-        data = Helpers.JSON.normalizeJson(data);
+        //data = Helpers.JSON.normalizeJson(data);
 
         console.log('response.service','db update',data);
 
-        data = await this.repository.updatePartial(entityId,data);
+        data = await this.repository.updatePartial(documentId,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -132,12 +100,12 @@ class ResponseService extends StatsService {
         return data;
     }
 
-    delete = async(request:Helpers.Request,entityId) => {
+    delete = async(request:Helpers.Request,documentId) => {
         let data :any = {
             status:'deleted'
         }
 
-        data = await this.repository.updatePartial(entityId,data);
+        data = await this.repository.updatePartial(documentId,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
