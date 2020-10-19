@@ -11,6 +11,9 @@ class ResponseService extends StatsService {
     private constructor() { 
         super(new ResponseRepository());
         Services.Binder.bindFunction(BinderNames.RESPONSE.CHECK.ID_EXISTS,this.checkIdExists);
+        Services.PubSub.Organizer.addSubscriberAll(PubSubMessageTypes.OPINION,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.COMMENT.CREATED,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.COMMENT.DELETED,this);
     }
 
     public static getInstance(): ResponseService {
@@ -21,17 +24,28 @@ class ResponseService extends StatsService {
         return ResponseService.instance;
     }
 
-    create = async(request:Helpers.Request,bodyP) => {
-        console.log('response.service',request,bodyP);
 
-        const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,bodyP.queryId)
+    processMessage(message: Services.PubSub.Message) {
+        switch(message.type){
+            case PubSubMessageTypes.OPINION.CREATED:
+                this.opinionCreated(message.request,message.data,'responseId');
+                break;
+            case PubSubMessageTypes.OPINION.DELETED:
+                this.opinionDeleted(message.request,message.data,'responseId');
+                break;
+            case PubSubMessageTypes.COMMENT.CREATED:
+                this.commentCreated(message.request,message.data,'responseId');
+                break;
+            case PubSubMessageTypes.COMMENT.DELETED:
+                this.commentDeleted(message.request,message.data,'responseId');
+                break;
+        }
+    } 
 
-        console.log('response.service','responseIdExists',queryIdExists);
+    create = async(request:Helpers.Request,data) => {
+        console.log('response.service',request,data);
 
-        if(!queryIdExists)
-            throw this.buildError(404);
-
-        let data:any = bodyP;
+        data.queryId = request.raw.params['queryId'];
 
         data.author = request.getUserId();
 
@@ -44,6 +58,8 @@ class ResponseService extends StatsService {
 
         console.log('query.service','db insert',data);
 
+        data.stats = {};
+        
         data = await this.repository.create(data);
 
         Services.PubSub.Organizer.publishMessage({
@@ -54,7 +70,7 @@ class ResponseService extends StatsService {
 
         console.log('query.service','published message');
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
@@ -65,12 +81,55 @@ class ResponseService extends StatsService {
             attributes = attributes.filter( function( el:string ) {
                 return exposableAttributes.includes( el );
             });
-        return this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+
+        const queryId = request.raw.params['queryId'];
+
+        query = {
+            "$and":[
+                {
+                    "queryId":queryId
+                },
+                query
+            ]
+        };
+
+        const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+
+        data.result = await this.embedAuthorInformation(request,data.result);
+
+        return data;
     }
 
-    update = async(request:Helpers.Request,documentId,bodyP) => {
-        console.log('response.service',request,bodyP);
-        let data :any = bodyP
+    get = async(request:Helpers.Request, documentId: string, attributes?: any[]) => {
+
+        const query = {
+            queryId:request.raw.params['queryId'],
+            _id:documentId
+        };
+
+        const data = await this.repository.getOne(query,attributes);
+
+        if(!data)
+            this.buildError(404);
+
+        Services.PubSub.Organizer.publishMessage({
+            request,
+            type:PubSubMessageTypes.RESPONSE.READ,
+            data
+        });
+
+        return (await this.embedAuthorInformation(request,[data]))[0];
+    }
+
+    update = async(request:Helpers.Request,documentId,data) => {
+        console.log('response.service',request,data);
+        
+        const query = {
+            queryId:request.raw.params['queryId'],
+            _id:documentId
+        };
+
+        data[data.status].lastModifiedAt = new Date();
 
         if(data.status === 'published'){
             data.draft = {
@@ -81,15 +140,11 @@ class ResponseService extends StatsService {
             delete data.status
         }
 
-        data[data.status] = {
-            lastModifiedAt:new Date()
-        }
-
         //data = Helpers.JSON.normalizeJson(data);
 
         console.log('response.service','db update',data);
 
-        data = await this.repository.updatePartial(documentId,data);
+        data = await this.repository.updateOnePartial(query,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -97,7 +152,7 @@ class ResponseService extends StatsService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     delete = async(request:Helpers.Request,documentId) => {
@@ -105,7 +160,12 @@ class ResponseService extends StatsService {
             status:'deleted'
         }
 
-        data = await this.repository.updatePartial(documentId,data);
+        const query = {
+            queryId:request.raw.params['queryId'],
+            _id:documentId
+        };
+
+        data = await this.repository.updateOnePartial(query,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -113,7 +173,7 @@ class ResponseService extends StatsService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 }
 

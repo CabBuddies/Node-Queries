@@ -24,11 +24,12 @@ Content-Type: application/json
     "draft":{
         "title":"  Q T 1  ",
         "body":"Q B 1",
-        "tags":["T1","T2","T3","T3","T2",null]
+        "tags":["T1","T2","T3"]
     },
     "published":{
         "title":"",
-        "body":""
+        "body":"",
+        "tags":["T4","T5","T6","T7"]
     },
     "customAttributes":{
         "random":"value",
@@ -37,8 +38,7 @@ Content-Type: application/json
         },
         "places":["San Jose","SFO"]
     },
-    "author":"admin",
-    "hazard":"hack"
+    "status":"published"
 }
 
 ###
@@ -67,6 +67,7 @@ Content-Type: application/json
         "published.tags",
         "published.lastModifiedAt",
         "acsess.type",
+        "acsess.users",
         "stats",
         "password",
         "createdAt"
@@ -74,7 +75,12 @@ Content-Type: application/json
 }
 ###
 
-PUT http://localhost:4001/api/v1/query/5f62ac612bdaa8816fb94652
+GET http://localhost:4001/api/v1/query/5f7996ae7a59160f80193ae5
+Authorization: Access {{accessToken}}
+Content-Type: application/json
+
+###
+PUT http://localhost:4001/api/v1/query/5f7996ae7a59160f80193ae5
 Authorization: Access {{accessToken}}
 Content-Type: application/json
 
@@ -83,12 +89,12 @@ Content-Type: application/json
     "draft":{
         "title":"  Q T 1  ",
         "body":"Q B 1",
-        "tags":["T1","T2","T3","T3","T2",null]
+        "tags":["T1","T2","T3"]
     },
     "published":{
         "title":"   Random Title   ",
         "body":"  Random Body ",
-        "tags":["T1","T2","T3","T3","T2",null]
+        "tags":["T4","T5","T2"]
     },
     "customAttributes":{
         "random":"value",
@@ -97,9 +103,7 @@ Content-Type: application/json
         },
         "places2":["San Jose","SFO","UFC"]
     },
-    "status":"published",
-    "author":"admin",
-    "hazard":"hack"
+    "status":"published"
 }
 
 

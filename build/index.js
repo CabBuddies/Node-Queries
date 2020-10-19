@@ -9,10 +9,10 @@ startServer();
 function startServer() {
     const router = express.Router();
     router.use('/query', routes.QueryRoutes);
-    router.use('/response', routes.ResponseRoutes);
-    router.use('/comment', routes.CommentRoutes);
+    // router.use('/response',routes.ResponseRoutes);
+    // router.use('/comment',routes.CommentRoutes);
     router.use('/tag', routes.TagRoutes);
-    router.use('/opinion', routes.OpinionRoutes);
+    // router.use('/opinion',routes.OpinionRoutes);
     app_1.default.use('/api/v1', router);
     app_1.default.listen(node_library_1.Config.PORT, () => {
         console.log('app listening', node_library_1.Config.PORT);

@@ -1,8 +1,12 @@
+import * as express from 'express';
 import { Router } from 'express';
-import { Middlewares } from 'node-library';
+import { Helpers, Middlewares } from 'node-library';
 import { ResponseController } from '../controllers';
-import { isAuthor } from '../middlewares';
+import { isAuthor,checkDocumentExists } from '../middlewares';
 import { AuthorService } from '../services';
+
+import CommentRouter from './comment.routes';
+import OpinionRouter from './opinion.routes';
 
 const router = Router()
 
@@ -10,30 +14,77 @@ const controller = new ResponseController();
 
 const authorService : AuthorService = <AuthorService> (controller.service);
 
-router.post('/',Middlewares.authCheck(true),Middlewares.validateRequestBody([
-    {name:'status',type:'string',trim:true,lower:true,defaultValue:'draft',anyOf:['draft','published']},
-    {name:'queryId',type:'string'},
-    {name:'draft.title',type:'string',max:140,trim:true},
-    {name:'draft.body',type:'string',max:500,trim:true},
-    {name:'published.title',type:'string',max:140,trim:true},
-    {name:'published.body',type:'string',max:500,trim:true},
-    {name:'customAttributes',type:'any',optional:true}
-]),controller.create)
+
+const validatorMiddleware = new Middlewares.ValidatorMiddleware([
+    {
+        "id": "/contentSchema",
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 4,  
+        "properties": {
+            "_id": {
+                "type": "string"
+            },
+            "title": {
+                "type": "string"
+            },
+            "body": {
+                "type": "string"
+            },
+            "tags": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+]);
+
+const schema = {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["queryId","draft","published","status"],
+    "properties": {
+        "draft": {
+            "$ref": "/contentSchema"
+        },
+        "published": {
+            "$ref": "/contentSchema"
+        },
+        "customAttributes":{
+            "type":"object"
+        },
+        "status":{
+            "type":"string",
+            "enum":["draft","published","deleted"]
+        }
+    }
+};
+
+router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody(schema),controller.create)
 
 router.get('/',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.authCheck(false),controller.get)
 
-router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),Middlewares.validateRequestBody([
-    {name:'status',type:'string',trim:true,lower:true,defaultValue:'draft',anyOf:['draft','published']},
-    {name:'draft.title',type:'string',max:140,trim:true},
-    {name:'draft.body',type:'string',max:500,trim:true},
-    {name:'published.title',type:'string',max:140,trim:true},
-    {name:'published.body',type:'string',max:500,trim:true},
-    {name:'customAttributes',type:'any',optional:true}
-]),controller.update)
+router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),validatorMiddleware.validateRequestBody(schema),controller.update)
 
 router.delete('/:id',Middlewares.authCheck(true),isAuthor(authorService),controller.delete)
 
+
+const responseExists = checkDocumentExists(authorService,'responseId');
+
+const responseCanRead = (req:express.Request, res:express.Response, next:express.NextFunction) => {
+    const request : Helpers.Request = res.locals.request;
+    console.log('\n\n\nresponseCanRead\n\n\n',request.getRaw(),'\n\n\n');
+    next();
+}
+
+router.param('responseId',Middlewares.addParamToRequest());
+
+router.use('/:responseId/comment',responseExists,responseCanRead,CommentRouter);
+router.use('/:responseId/opinion',responseExists,responseCanRead,OpinionRouter);
 
 export default router;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.ResponseRepository = exports.StatsRepository = exports.TagRepository = exports.OpinionRepository = exports.CommentRepository = exports.QueryRepository = exports.AuthorRepository = void 0;
+exports.UserRepository = exports.ResponseRepository = exports.StatsRepository = exports.TagRepository = exports.OpinionRepository = exports.CommentRepository = exports.QueryRepository = exports.AuthorRepository = exports.AccessRepository = void 0;
 const query_repository_1 = require("./query.repository");
 exports.QueryRepository = query_repository_1.default;
 const comment_repository_1 = require("./comment.repository");
@@ -15,5 +15,7 @@ const user_repository_1 = require("./user.repository");
 exports.UserRepository = user_repository_1.default;
 const author_repository_1 = require("./author.repository");
 exports.AuthorRepository = author_repository_1.default;
+const access_repository_1 = require("./access.repository");
+exports.AccessRepository = access_repository_1.default;
 const stats_repository_1 = require("./stats.repository");
 exports.StatsRepository = stats_repository_1.default;

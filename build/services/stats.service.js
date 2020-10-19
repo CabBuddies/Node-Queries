@@ -14,7 +14,32 @@ class StatsService extends author_service_1.default {
     constructor(repository) {
         super(repository);
         this.updateStat = (request, entityId, statType, increase) => __awaiter(this, void 0, void 0, function* () {
-            this.repository.updateStat(entityId, statType, increase);
+            console.log('updateStat', entityId, statType, increase);
+            return yield this.repository.updateStat(entityId, statType, increase);
+        });
+        this.opinionCreated = (request, data, entityAttribute) => __awaiter(this, void 0, void 0, function* () {
+            console.log('opinionCreated', data, entityAttribute);
+            if (!data[entityAttribute])
+                return;
+            return yield this.updateStat(request, data[entityAttribute], data['opinionType'] + 'Count', true);
+        });
+        this.opinionDeleted = (request, data, entityAttribute) => __awaiter(this, void 0, void 0, function* () {
+            console.log('opinionCreated', data, entityAttribute);
+            if (!data[entityAttribute])
+                return;
+            return yield this.updateStat(request, data[entityAttribute], data['opinionType'] + 'Count', false);
+        });
+        this.commentCreated = (request, data, entityAttribute) => __awaiter(this, void 0, void 0, function* () {
+            console.log('commentCreated', data, entityAttribute);
+            if (!data[entityAttribute])
+                return;
+            return yield this.updateStat(request, data[entityAttribute], 'commentCount', true);
+        });
+        this.commentDeleted = (request, data, entityAttribute) => __awaiter(this, void 0, void 0, function* () {
+            console.log('commentDeleted', data, entityAttribute);
+            if (!data[entityAttribute])
+                return;
+            return yield this.updateStat(request, data[entityAttribute], 'commentCount', false);
         });
     }
 }

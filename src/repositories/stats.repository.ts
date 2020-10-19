@@ -10,7 +10,7 @@ class StatsRepository extends AuthorRepository {
     updateStat = async(entityId,property:string,increase:boolean) => {
         const query = {}
         query["stats."+property] = increase ? 1 : -1;
-        this.model.findOneAndUpdate({ _id:entityId },{$inc:query},{new:true})
+        return await this.model.findOneAndUpdate({ _id:entityId },{$inc:query},{new:true})
     }
 }
 

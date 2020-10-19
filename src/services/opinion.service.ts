@@ -3,6 +3,7 @@ import {Helpers,Services} from 'node-library';
 import {PubSubMessageTypes} from '../helpers/pubsub.helper';
 import AuthorService from './author.service';
 import { BinderNames } from '../helpers/binder.helper';
+import { JSON } from 'node-library/lib/helpers';
 
 class OpinionService extends AuthorService {
 
@@ -23,26 +24,16 @@ class OpinionService extends AuthorService {
     create = async(request:Helpers.Request,data) => {
         console.log('opinion.service',request,data);
 
-        if(data.queryId){
-            const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,data.queryId)
-            if(!queryIdExists)
-                throw this.buildError(404,'queryId not available')
-            delete data.responseId;
-        }else if(data.responseId){
-            const responseIdExists = await Services.Binder.boundFunction(BinderNames.RESPONSE.CHECK.ID_EXISTS)(request,data.responseId)
-            if(!responseIdExists)
-                throw this.buildError(404,'responseId not available')
-        }else{
-            throw this.buildError(400,'queryId or responseId not provided')
-        }
+        data.queryId = request.raw.params['queryId'];
+        data.responseId = request.raw.params['responseId']||'none';
 
         data.author = request.getUserId();
 
-        let response = await this.getAll(request,{
+        let response = await this.getAll(request,JSON.normalizeJson({
             author:data.author,
             queryId:data.queryId,
             responseId:data.responseId,
-        },100);
+        }),{},1000);
 
         if(response.resultSize>0){
             for(const opinion of response.result){
@@ -77,8 +68,17 @@ class OpinionService extends AuthorService {
     }
 
 
-    delete = async(request:Helpers.Request,entityId) => {
-        let data = await this.repository.delete(entityId)
+    delete = async(request:Helpers.Request,documentId) => {
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
+
+        const query :any = {
+            queryId,
+            responseId,
+            _id:documentId
+        };
+
+        let data = await this.repository.deleteOne(query);
 
         Services.PubSub.Organizer.publishMessage({
             request,

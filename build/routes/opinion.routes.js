@@ -7,7 +7,30 @@ const middlewares_1 = require("../middlewares");
 const router = express_1.Router();
 const controller = new controllers_1.OpinionController();
 const authorService = (controller.service);
-router.post('/', node_library_1.Middlewares.authCheck(true), controller.create);
+const validatorMiddleware = new node_library_1.Middlewares.ValidatorMiddleware();
+router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware.validateRequestBody({
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["opinionType"],
+    "properties": {
+        "queryId": {
+            "type": "string"
+        },
+        "responseId": {
+            "type": "string"
+        },
+        "body": {
+            "type": "string"
+        },
+        "opinionType": {
+            "type": "string",
+            "enum": ['follow', 'upvote', 'downvote', 'spamreport']
+        },
+        "customAttributes": {
+            "type": "object"
+        }
+    }
+}), controller.create);
 router.get('/', node_library_1.Middlewares.authCheck(false), controller.getAll);
 router.get('/:id', node_library_1.Middlewares.authCheck(false), controller.get);
 router.delete('/:id', node_library_1.Middlewares.authCheck(true), middlewares_1.isAuthor(authorService), controller.delete);

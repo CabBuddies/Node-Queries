@@ -14,6 +14,7 @@ const node_library_1 = require("node-library");
 const pubsub_helper_1 = require("../helpers/pubsub.helper");
 const author_service_1 = require("./author.service");
 const binder_helper_1 = require("../helpers/binder.helper");
+const helpers_1 = require("node-library/lib/helpers");
 class OpinionService extends author_service_1.default {
     constructor() {
         super(new repositories_1.OpinionRepository());
@@ -34,11 +35,11 @@ class OpinionService extends author_service_1.default {
                 throw this.buildError(400, 'queryId or responseId not provided');
             }
             data.author = request.getUserId();
-            let response = yield this.getAll(request, {
+            let response = yield this.getAll(request, helpers_1.JSON.normalizeJson({
                 author: data.author,
                 queryId: data.queryId,
                 responseId: data.responseId,
-            }, 100);
+            }), {}, 1000);
             if (response.resultSize > 0) {
                 for (const opinion of response.result) {
                     if (data.opinionType === opinion.opinionType) {

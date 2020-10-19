@@ -10,10 +10,10 @@ function startServer(){
     const router :express.Router = express.Router()
 
     router.use('/query',routes.QueryRoutes);
-    router.use('/response',routes.ResponseRoutes);
-    router.use('/comment',routes.CommentRoutes);
+    // router.use('/response',routes.ResponseRoutes);
+    // router.use('/comment',routes.CommentRoutes);
     router.use('/tag',routes.TagRoutes);
-    router.use('/opinion',routes.OpinionRoutes);
+    // router.use('/opinion',routes.OpinionRoutes);
     
     app.use('/api/v1',router);
     

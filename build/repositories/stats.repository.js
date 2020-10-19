@@ -16,7 +16,7 @@ class StatsRepository extends author_repository_1.default {
         this.updateStat = (entityId, property, increase) => __awaiter(this, void 0, void 0, function* () {
             const query = {};
             query["stats." + property] = increase ? 1 : -1;
-            this.model.findOneAndUpdate({ _id: entityId }, { $inc: query }, { new: true });
+            return yield this.model.findOneAndUpdate({ _id: entityId }, { $inc: query }, { new: true });
         });
     }
 }

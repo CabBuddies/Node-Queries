@@ -19,16 +19,34 @@ class TagService extends Services.BaseService {
         return TagService.instance;
     }
 
-    processMessage(message: Services.PubSub.Message) : Promise<Services.PubSub.Message>{
+    processMessage(message: Services.PubSub.Message){
         switch(message.type){
             case PubSubMessageTypes.QUERY.CREATED:
+                this.queryCreated(message.data);
+                break;
             case PubSubMessageTypes.QUERY.UPDATED:
-                
+                this.queryUpdated(message.data);
+                break;
+            case PubSubMessageTypes.QUERY.UPDATED:
+                this.queryDeleted(message.data);
+                break;
         }
-        return new Promise<Services.PubSub.Message>(function(resolve,reject){
-            resolve(undefined);
-        })
     }
+
+    async queryDeleted(data: any) {
+        await this.repository.removeQueryFromTags(data._id);
+    }
+
+    async queryCreated(data: any) {
+        await this.repository.createTags(data.published.tags);
+        await this.repository.addQueryToTags(data._id,data.published.tags);
+    }
+    
+    async queryUpdated(data: any) {
+        await this.queryDeleted(data);
+        await this.queryCreated(data);
+    }
+
 
 }
 

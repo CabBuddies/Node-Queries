@@ -21,7 +21,7 @@ const tagSchema = new mongoose.Schema({
         default: 0
     },
     queries: [
-        mongoose.Schema.Types.ObjectId
+        String
     ]
 });
 const Tag = db_1.primaryDb.model('Tag', tagSchema);

@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_library_1 = require("node-library");
+const binder_helper_1 = require("../helpers/binder.helper");
 class AuthorService extends node_library_1.Services.BaseService {
     constructor(repository) {
         super(repository);
@@ -20,13 +21,37 @@ class AuthorService extends node_library_1.Services.BaseService {
             try {
                 const result = yield this.repository.get(id);
                 console.log('AuthorService', 'checkIdExists', result);
-                if (result)
-                    return result._id.toString() === id;
+                return result;
             }
             catch (error) {
                 console.log(error);
             }
             return false;
+        });
+        this.embedAuthorInformation = (request, arr = [], attributes = ['author']) => __awaiter(this, void 0, void 0, function* () {
+            console.log('embedAuthorInformation', arr);
+            if (arr.length === 0)
+                return arr;
+            const authors = {};
+            arr.forEach((a) => {
+                attributes.forEach((at) => {
+                    authors[a[at]] = {};
+                });
+            });
+            const authorInfos = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.USER.EXTRACT.USER_PROFILES)(Object.keys(authors));
+            authorInfos.forEach((authorInfo) => {
+                authorInfo = JSON.parse(JSON.stringify(authorInfo));
+                authors[authorInfo['userId']] = authorInfo;
+            });
+            console.log('embedAuthorInformation', authors);
+            for (let i = 0; i < arr.length; i++) {
+                attributes.forEach((attribute) => {
+                    arr[i] = JSON.parse(JSON.stringify(arr[i]));
+                    arr[i][attribute] = authors[arr[i][attribute]];
+                });
+            }
+            console.log('embedAuthorInformation', arr);
+            return arr;
         });
     }
 }

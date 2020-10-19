@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserService = exports.TagService = exports.ResponseService = exports.OpinionService = exports.CommentService = exports.QueryService = exports.AuthorService = void 0;
+exports.UserService = exports.TagService = exports.ResponseService = exports.OpinionService = exports.CommentService = exports.QueryService = exports.AuthorService = exports.AccessService = void 0;
 const query_service_1 = require("./query.service");
 exports.QueryService = query_service_1.default;
 const comment_service_1 = require("./comment.service");
@@ -15,3 +15,5 @@ const user_service_1 = require("./user.service");
 exports.UserService = user_service_1.default;
 const author_service_1 = require("./author.service");
 exports.AuthorService = author_service_1.default;
+const access_service_1 = require("./access.service");
+exports.AccessService = access_service_1.default;

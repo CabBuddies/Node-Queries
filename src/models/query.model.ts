@@ -1,7 +1,7 @@
 import {primaryDb} from '../db';
 import * as mongoose from 'mongoose';
-import {Schemas} from 'node-library';
 import {contentSchema,statsSchema} from '../schemas';
+
 const querySchema = new mongoose.Schema({
     author:{
         type:String,
@@ -21,14 +21,9 @@ const querySchema = new mongoose.Schema({
     customAttributes:mongoose.Schema.Types.Mixed,
     stats:statsSchema,
     access:{
-        type:{
-            type:String,
-            enum:['public','followers','private'],
-            default:'public'
-        },
-        users:[
-            String
-        ]
+        type:String,
+        enum:['public','followers','private'],
+        default:'public'
     }
 });
 

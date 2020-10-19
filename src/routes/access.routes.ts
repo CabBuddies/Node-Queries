@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { Middlewares } from 'node-library';
-import { CommentController } from '../controllers';
+import { AccessController } from '../controllers';
 import { isAuthor } from '../middlewares';
 import { AuthorService } from '../services';
 
 const router = Router()
 
-const controller = new CommentController();
+const controller = new AccessController();
 
 const authorService : AuthorService = <AuthorService> (controller.service);
 
@@ -15,10 +15,17 @@ const validatorMiddleware = new Middlewares.ValidatorMiddleware();
 router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
-    "required": ["body"],
+    "required": ["queryId","userId","status"],
     "properties": {
-        "body":{
+        "queryId":{
             "type":"string"
+        },
+        "userId":{
+            "type":"string"
+        },
+        "status":{
+            "type":"string",
+            "enum":["granted","revoked","requested"]
         },
         "customAttributes":{
             "type":"object"
@@ -33,10 +40,11 @@ router.get('/:id',Middlewares.authCheck(false),controller.get)
 router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
-    "required": ["body"],
+    "required": ["status"],
     "properties": {
-        "body":{
-            "type":"string"
+        "status":{
+            "type":"string",
+            "enum":["granted","revoked","requested"]
         },
         "customAttributes":{
             "type":"object"

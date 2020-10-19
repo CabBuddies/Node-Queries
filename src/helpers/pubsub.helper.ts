@@ -17,6 +17,12 @@ const PubSubMessageTypes = {
         UPDATED:"COMMENT_UPDATED",
         DELETED:"COMMENT_DELETED"
     },
+    ACCESS:{
+        CREATED:"ACCESS_CREATED",
+        READ:"ACCESS_READ",
+        UPDATED:"ACCESS_UPDATED",
+        DELETED:"ACCESS_DELETED"
+    },
     OPINION:{
         CREATED:"OPINION_CREATED",
         DELETED:"OPINION_DELETED"

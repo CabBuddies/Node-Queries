@@ -5,8 +5,10 @@ import ResponseService from './response.service';
 import TagService from './tag.service';
 import UserService from './user.service';
 import AuthorService from './author.service';
+import AccessService from './access.service';
 
 export {
+    AccessService,
     AuthorService,
     QueryService,
     CommentService,

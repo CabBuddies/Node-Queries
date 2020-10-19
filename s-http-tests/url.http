@@ -1,0 +1,18 @@
+GET http://localhost:4001/api/v1/query
+Content-Type: application/json
+
+###
+GET http://localhost:4001/api/v1/query/5f5beccfb8b06f3c52344303
+Content-Type: application/json
+
+###
+GET http://localhost:4001/api/v1/query/5f5beccfb8b06f3c52344303/response
+Content-Type: application/json
+
+###
+GET http://localhost:4001/api/v1/query/101/response/201/comment
+Content-Type: application/json
+
+###
+GET http://localhost:4001/api/v1/query/101/response/201/opinion
+Content-Type: application/json

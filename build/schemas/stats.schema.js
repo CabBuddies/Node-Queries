@@ -10,20 +10,24 @@ const statsSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    commentCount: {
+        type: Number,
+        default: 0
+    },
     followCount: {
         type: Number,
         default: 0
     },
     //query and response props
-    upVoteCount: {
+    upvoteCount: {
         type: Number,
         default: 0
     },
-    downVoteCount: {
+    downvoteCount: {
         type: Number,
         default: 0
     },
-    spamReportCount: {
+    spamreportCount: {
         type: Number,
         default: 0
     },

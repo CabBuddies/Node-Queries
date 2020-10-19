@@ -20,25 +20,11 @@ class CommentService extends AuthorService {
         return CommentService.instance;
     }
 
-    create = async(request:Helpers.Request,bodyP) => {
-        console.log('comment.service',request,bodyP);
+    create = async(request:Helpers.Request,data) => {
+        console.log('comment.service',request,data);
 
-        if(bodyP.queryId){
-            const queryIdExists = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,bodyP.queryId)
-            console.log('comment.service','create','queryIdExists',queryIdExists)
-            if(!queryIdExists)
-                throw this.buildError(404,'queryId not available')
-            delete bodyP.responseId;
-        }else if(bodyP.responseId){
-            const responseIdExists = await Services.Binder.boundFunction(BinderNames.RESPONSE.CHECK.ID_EXISTS)(request,bodyP.responseId)
-            console.log('comment.service','create','responseIdExists',responseIdExists)
-            if(!responseIdExists)
-                throw this.buildError(404,'responseId not available')
-        }else{
-            throw this.buildError(400,'queryId or responseId not provided')
-        }
-
-        let data:any = bodyP;
+        data.queryId = request.raw.params['queryId'];
+        data.responseId = request.raw.params['responseId']||'none';
 
         data.author = request.getUserId();
 
@@ -56,19 +42,76 @@ class CommentService extends AuthorService {
 
         console.log('comment.service','published message');
 
+        return (await this.embedAuthorInformation(request,[data]))[0];
+    }
+
+    getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
+        const exposableAttributes = ['author','queryId','published.title','published.tags','published.lastModifiedAt','createdAt','status','stats','access.type'];
+        if(attributes.length === 0)
+            attributes = exposableAttributes;
+        else
+            attributes = attributes.filter( function( el:string ) {
+                return exposableAttributes.includes( el );
+            });
+
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
+
+        query = {
+            "$and":[
+                query,{"queryId":queryId},{"responseId":responseId}
+            ]
+        };    
+
+        const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+
+        data.result = await this.embedAuthorInformation(request,data.result);
+
         return data;
     }
 
-    update = async(request:Helpers.Request,documentId:string,bodyP) => {
-        console.log('comment.service',request,bodyP);
+    get = async(request:Helpers.Request, documentId: string, attributes?: any[]) => {
+        
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
 
-        let data :any = bodyP;
+        const query :any = {
+            queryId,
+            responseId,
+            _id:documentId
+        };
+
+        const data = await this.repository.getOne(query,attributes);
+
+        if(!data)
+            this.buildError(404);
+
+        Services.PubSub.Organizer.publishMessage({
+            request,
+            type:PubSubMessageTypes.COMMENT.READ,
+            data
+        });
+
+        return (await this.embedAuthorInformation(request,[data]))[0];
+    }
+
+    update = async(request:Helpers.Request,documentId:string,data) => {
+        console.log('comment.service',request,data);
+
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
+
+        const query :any = {
+            queryId,
+            responseId,
+            _id:documentId
+        };
 
         data = Helpers.JSON.normalizeJson(data);
 
         console.log('comment.service','db update',data);
 
-        data = await this.repository.updatePartial(documentId,data);
+        data = await this.repository.updateOnePartial(query,data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -76,11 +119,20 @@ class CommentService extends AuthorService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     delete = async(request:Helpers.Request,documentId:string) => {
-        let data = await this.repository.delete(documentId)
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
+
+        const query :any = {
+            queryId,
+            responseId,
+            _id:documentId
+        };
+
+        let data = await this.repository.deleteOne(query);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -88,7 +140,7 @@ class CommentService extends AuthorService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 }
 

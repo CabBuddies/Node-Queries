@@ -2,21 +2,18 @@ import {primaryDb} from '../db';
 import * as mongoose from 'mongoose';
 import {Schemas} from 'node-library';
 
-const commentSchema = new mongoose.Schema({
+const accessSchema = new mongoose.Schema({
     author:{
         type:String,
-        required: 'author is required'
-    },
-    body:{
-        type:String,
-        required: 'body is required'
+        required:'author is required'
     },
     queryId:{
-        type:String
-    },
-    responseId:{
         type:String,
-        default:'none'
+        required:'queryId is required'
+    },
+    userId:{
+        type:String,
+        required:'userId is required'
     },
     createdAt:{
         type: Date,
@@ -26,9 +23,14 @@ const commentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    status:{
+        type:String,
+        enum:["granted","revoked","requested"],
+        default:"requested"
+    },
     customAttributes:mongoose.Schema.Types.Mixed
 });
 
-const Comment = primaryDb.model('Comment',commentSchema);
+const Access = primaryDb.model('Access',accessSchema);
 
-export default Comment;
+export default Access;

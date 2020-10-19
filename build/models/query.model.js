@@ -22,14 +22,9 @@ const querySchema = new mongoose.Schema({
     customAttributes: mongoose.Schema.Types.Mixed,
     stats: schemas_1.statsSchema,
     access: {
-        type: {
-            type: String,
-            enum: ['public', 'followers', 'private'],
-            default: 'public'
-        },
-        users: [
-            String
-        ]
+        type: String,
+        enum: ['public', 'followers', 'private'],
+        default: 'public'
     }
 });
 const Query = db_1.primaryDb.model('Query', querySchema);

@@ -10,13 +10,25 @@ const controller = new OpinionController();
 
 const authorService : AuthorService = <AuthorService> (controller.service);
 
-router.post('/',Middlewares.authCheck(true),Middlewares.validateRequestBody([
-    {name:'queryId',type:'string',optional:true},
-    {name:'responseId',type:'string',optional:true},
-    {name:'body',type:'string',optional:true},
-    {name:'opinionType',type:'string',trim:true,lower:true,defaultValue:'upvote',anyOf:['follow','upvote','downvote','spamreport']},
-    {name:'customAttributes',type:'any',optional:true}
-]),controller.create)
+const validatorMiddleware = new Middlewares.ValidatorMiddleware();
+
+router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody({
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["opinionType"],
+    "properties": {
+        "body":{
+            "type":"string"
+        },
+        "opinionType":{
+            "type":"string",
+            "enum":['follow','upvote','downvote','spamreport']
+        },
+        "customAttributes":{
+            "type":"object"
+        }
+    }
+}),controller.create)
 
 router.get('/',Middlewares.authCheck(false),controller.getAll)
 

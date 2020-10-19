@@ -1,8 +1,9 @@
 import {QueryRepository} from '../repositories';
 import {Helpers,Services} from 'node-library';
 import {PubSubMessageTypes} from '../helpers/pubsub.helper';
-import StatsService from './stats.service';
+import AccessService from './access.service';
 import { BinderNames } from '../helpers/binder.helper';
+import StatsService from './stats.service';
 
 class QueryService extends StatsService {
 
@@ -11,6 +12,13 @@ class QueryService extends StatsService {
     private constructor() { 
         super(new QueryRepository());
         Services.Binder.bindFunction(BinderNames.QUERY.CHECK.ID_EXISTS,this.checkIdExists);
+
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.QUERY.READ,this);
+        Services.PubSub.Organizer.addSubscriberAll(PubSubMessageTypes.OPINION,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.RESPONSE.CREATED,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.RESPONSE.DELETED,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.COMMENT.CREATED,this);
+        Services.PubSub.Organizer.addSubscriber(PubSubMessageTypes.COMMENT.DELETED,this);
     }
 
     public static getInstance(): QueryService {
@@ -19,6 +27,44 @@ class QueryService extends StatsService {
         }
 
         return QueryService.instance;
+    }
+
+    processMessage(message: Services.PubSub.Message) {
+        switch(message.type){
+            case PubSubMessageTypes.QUERY.READ:
+                this.queryRead(message.request,message.data);
+                break;
+            case PubSubMessageTypes.OPINION.CREATED:
+                this.opinionCreated(message.request,message.data,'queryId');
+                break;
+            case PubSubMessageTypes.OPINION.DELETED:
+                this.opinionDeleted(message.request,message.data,'queryId');
+                break;
+            case PubSubMessageTypes.RESPONSE.CREATED:
+                this.responseCreated(message.request,message.data);
+                break;
+            case PubSubMessageTypes.RESPONSE.DELETED:
+                this.responseDeleted(message.request,message.data);
+                break;
+            case PubSubMessageTypes.COMMENT.CREATED:
+                this.commentCreated(message.request,message.data,'queryId');
+                break;
+            case PubSubMessageTypes.COMMENT.DELETED:
+                this.commentDeleted(message.request,message.data,'queryId');
+                break;
+        }
+    } 
+    
+    responseCreated(request: Helpers.Request, data: any) {        
+        this.updateStat(request,data.queryId,"responseCount",true);
+    }
+
+    responseDeleted(request: Helpers.Request, data: any) {
+        this.updateStat(request,data.queryId,"responseCount",false);
+    }
+
+    queryRead(request:Helpers.Request,data: any) {
+        this.updateStat(request,data._id,"viewCount",true);
     }
 
     create = async(request:Helpers.Request,bodyP) => {
@@ -38,7 +84,9 @@ class QueryService extends StatsService {
 
         console.log('query.service','db insert',data);
 
-        data = await this.repository.create(bodyP);
+        data.stats = {};
+
+        data = await this.repository.create(data);
 
         Services.PubSub.Organizer.publishMessage({
             request,
@@ -48,7 +96,7 @@ class QueryService extends StatsService {
 
         console.log('query.service','published message');
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
@@ -59,13 +107,36 @@ class QueryService extends StatsService {
             attributes = attributes.filter( function( el:string ) {
                 return exposableAttributes.includes( el );
             });
-        return this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+        
+        const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+
+        data.result = await this.embedAuthorInformation(request,data.result);
+
+        return data;
+    }
+
+    get = async(request:Helpers.Request, documentId: string, attributes?: any[]) => {
+
+        const data = await this.repository.get(documentId,attributes);
+
+        if(!data)
+            this.buildError(404);
+
+        Services.PubSub.Organizer.publishMessage({
+            request,
+            type:PubSubMessageTypes.QUERY.READ,
+            data
+        });
+
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     update = async(request:Helpers.Request,documentId:string,bodyP) => {
         console.log('query.service',request,bodyP);
 
         let data :any = bodyP
+
+        data[data.status].lastModifiedAt = new Date();
 
         if(data.status === 'published'){
             data.draft = {
@@ -75,10 +146,6 @@ class QueryService extends StatsService {
             };
         }else{
             delete data.status
-        }
-
-        data[data.status] = {
-            lastModifiedAt:new Date()
         }
 
         //data = Helpers.JSON.normalizeJson(data);
@@ -93,7 +160,7 @@ class QueryService extends StatsService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     delete = async(request:Helpers.Request,documentId:string) => {
@@ -109,7 +176,7 @@ class QueryService extends StatsService {
             data
         });
 
-        return data;
+        return (await this.embedAuthorInformation(request,[data]))[0];
     }
 
     deepEqual =  (x, y) => {
