@@ -1,9 +1,8 @@
 import {Repositories} from 'node-library';
 import * as mongoose from 'mongoose';
 import Access from '../models/access.model';
-import AuthorRepository from './author.repository';
 
-class AccessRepository extends AuthorRepository {
+class AccessRepository extends Repositories.AuthorRepository {
     constructor(){
         super(Access);
     }

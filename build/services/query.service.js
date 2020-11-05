@@ -21,6 +21,8 @@ class QueryService extends stats_service_1.default {
             console.log('query.service', request, bodyP);
             let data = bodyP;
             data.author = request.getUserId();
+            data.status = data.status || 'draft';
+            data.access = data.access || 'public';
             if (data.status === 'published') {
                 data.draft = {
                     title: '',

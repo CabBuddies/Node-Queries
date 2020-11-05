@@ -8,6 +8,7 @@ import Comment from './comment.model';
 import Opinion from './opinion.model';
 import Tag from './tag.model';
 import User from './user.model';
+import UserRelation from './user.relation.model';
 
 export {
     Query,
@@ -15,5 +16,6 @@ export {
     Comment,
     Opinion,
     Tag,
-    User
+    User,
+    UserRelation
 }

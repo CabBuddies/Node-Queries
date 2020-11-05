@@ -1,11 +1,10 @@
 import {OpinionRepository} from '../repositories';
 import {Helpers,Services} from 'node-library';
 import {PubSubMessageTypes} from '../helpers/pubsub.helper';
-import AuthorService from './author.service';
 import { BinderNames } from '../helpers/binder.helper';
 import { JSON } from 'node-library/lib/helpers';
 
-class OpinionService extends AuthorService {
+class OpinionService extends Services.AuthorService {
 
     private static instance: OpinionService;
     

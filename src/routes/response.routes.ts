@@ -1,9 +1,7 @@
 import * as express from 'express';
 import { Router } from 'express';
-import { Helpers, Middlewares } from 'node-library';
+import { Helpers, Middlewares, Services } from 'node-library';
 import { ResponseController } from '../controllers';
-import { isAuthor,checkDocumentExists } from '../middlewares';
-import { AuthorService } from '../services';
 
 import CommentRouter from './comment.routes';
 import OpinionRouter from './opinion.routes';
@@ -12,7 +10,7 @@ const router = Router()
 
 const controller = new ResponseController();
 
-const authorService : AuthorService = <AuthorService> (controller.service);
+const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 
 
 const validatorMiddleware = new Middlewares.ValidatorMiddleware([
@@ -69,12 +67,12 @@ router.get('/',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.authCheck(false),controller.get)
 
-router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),validatorMiddleware.validateRequestBody(schema),controller.update)
+router.put('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody(schema),controller.update)
 
-router.delete('/:id',Middlewares.authCheck(true),isAuthor(authorService),controller.delete)
+router.delete('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),controller.delete)
 
 
-const responseExists = checkDocumentExists(authorService,'responseId');
+const responseExists = Middlewares.checkDocumentExists(authorService,'responseId');
 
 const responseCanRead = (req:express.Request, res:express.Response, next:express.NextFunction) => {
     const request : Helpers.Request = res.locals.request;

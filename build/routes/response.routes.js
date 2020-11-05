@@ -35,14 +35,11 @@ const validatorMiddleware = new node_library_1.Middlewares.ValidatorMiddleware([
         }
     }
 ]);
-router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware.validateRequestBody({
+const schema = {
     "type": "object",
     "additionalProperties": false,
     "required": ["queryId", "draft", "published", "status"],
     "properties": {
-        "queryId": {
-            "type": "string"
-        },
         "draft": {
             "$ref": "/contentSchema"
         },
@@ -57,30 +54,19 @@ router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware
             "enum": ["draft", "published", "deleted"]
         }
     }
-}), controller.create);
+};
+router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware.validateRequestBody(schema), controller.create);
 router.get('/', node_library_1.Middlewares.authCheck(false), controller.getAll);
 router.get('/:id', node_library_1.Middlewares.authCheck(false), controller.get);
-router.put('/:id', node_library_1.Middlewares.authCheck(true), middlewares_1.isAuthor(authorService), validatorMiddleware.validateRequestBody({
-    "type": "object",
-    "additionalProperties": false,
-    "required": ["draft", "published", "status"],
-    "properties": {
-        "draft": {
-            "$ref": "/contentSchema"
-        },
-        "published": {
-            "$ref": "/contentSchema"
-        },
-        "customAttributes": {
-            "type": "object"
-        },
-        "status": {
-            "type": "string",
-            "enum": ["draft", "published", "deleted"]
-        }
-    }
-}), controller.update);
+router.put('/:id', node_library_1.Middlewares.authCheck(true), middlewares_1.isAuthor(authorService), validatorMiddleware.validateRequestBody(schema), controller.update);
 router.delete('/:id', node_library_1.Middlewares.authCheck(true), middlewares_1.isAuthor(authorService), controller.delete);
-router.use('/:responseId/comment', comment_routes_1.default);
-router.use('/:responseId/opinion', opinion_routes_1.default);
+const responseExists = middlewares_1.checkDocumentExists(authorService, 'responseId');
+const responseCanRead = (req, res, next) => {
+    const request = res.locals.request;
+    console.log('\n\n\nresponseCanRead\n\n\n', request.getRaw(), '\n\n\n');
+    next();
+};
+router.param('responseId', node_library_1.Middlewares.addParamToRequest());
+router.use('/:responseId/comment', responseExists, responseCanRead, comment_routes_1.default);
+router.use('/:responseId/opinion', responseExists, responseCanRead, opinion_routes_1.default);
 exports.default = router;

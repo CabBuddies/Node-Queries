@@ -1,10 +1,9 @@
 import {Helpers,Services} from 'node-library';
 import { AccessRepository } from '../repositories';
 import {PubSubMessageTypes} from '../helpers/pubsub.helper';
-import AuthorService from './author.service';
 import { BinderNames } from '../helpers/binder.helper';
 
-class AccessService extends AuthorService {
+class AccessService extends Services.AuthorService {
 
     private static instance: AccessService;
     
@@ -20,19 +19,92 @@ class AccessService extends AuthorService {
         return AccessService.instance;
     }
 
+    canUserAccessQuery = async(request:Helpers.Request, userId:string, queryId:string) => {
+        
+        //extract query from database
 
-    create = async(request:Helpers.Request,data) => {
-        console.log('access.service',request,data);
-
-        const query = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,data.queryId);
-        console.log('access.service','create','query',query);
+        const query = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,queryId);
+        
+        console.log('access.service','canUserAccessQuery','query',query);
+        
         if(!query)
             throw this.buildError(404,'query not available');
 
-        data.author = request.getUserId();
+        //check if the query of queryId is public
 
-        if(query.author !== data.author)
-            throw this.buildError(403,'query author mismatch');
+        if(query.access === "public"){
+            console.log('query is public, so you can access it');
+            return true;
+        }
+        //if not
+        //check if the userId exists
+
+        if(!userId){
+            console.log('query is not public, so you cant access it without auth');
+            return false;
+        }
+        //if not
+        //if requestor is the query author
+
+        if(query.author === userId){
+            console.log('query is not public, but you are its author so you can access it');
+            return true;
+        }
+        //if not
+        //check if query access is followers
+
+        if(query.access === "followers"){
+            const followerRule = await Services.Binder.boundFunction(BinderNames.USER_RELATION.CHECK.IS_FOLLOWER)(query.author,userId);
+            if(followerRule){
+                console.log('query access type is followers, and you are a follower of the query author',followerRule);
+                return true;
+            }
+            console.log('query access type is followers, and you are not a follower of the query author','but still you could have a chance with access rules');
+        }
+
+        //if not
+        //search for access rules that are in this format : {"queryId":queryId,userId:request.getUserId(),"status":"granted"}
+
+        const _query = {};
+
+        _query['author'] = query.author;
+        _query['queryId'] = query._id;
+        _query['userId'] = userId;
+        _query['status'] = "granted";
+
+        const data = await this.repository.getAll(_query);
+
+        console.log('query access rules that allow you to read are',data.result);
+
+        return data.resultTotalSize > 0;
+    }
+
+    create = async(request:Helpers.Request,data) => {
+
+        //author of the query is trying to "grant/revoked" access to a different user
+        //different user is trying to "request" access to a query
+
+        data.queryId = request.raw.params['queryId'];
+
+        console.log('access.service',request,data);
+
+        const query = await Services.Binder.boundFunction(BinderNames.QUERY.CHECK.ID_EXISTS)(request,data.queryId);
+        
+        console.log('access.service','create','query',query);
+        
+        if(!query)
+            throw this.buildError(404,'query not available');
+
+        //data.status = "granted"
+
+        if(data.status === "requested"){
+            data.author = query.author;
+            data.userId = request.getUserId();
+        }else{
+            data.author = request.getUserId();
+            if(query.author !== data.author)
+                throw this.buildError(403,'query author mismatch');
+        }
 
         console.log('access.service','db insert',data);
 
@@ -46,7 +118,9 @@ class AccessService extends AuthorService {
 
         console.log('access.service','published message');
 
-        return (await this.embedAuthorInformation(request,[data],['author','userId']))[0];
+        return (await this.embedAuthorInformation(request,[data],['author','userId'],
+            Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)
+        ))[0];
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
@@ -59,10 +133,12 @@ class AccessService extends AuthorService {
             });
         
         query['author'] = request.getUserId();
+        query['queryId'] = request.raw.params['queryId'];
 
         const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
 
-        data.result = await this.embedAuthorInformation(request,data.result,['author','userId']);
+        data.result = await this.embedAuthorInformation(request,data.result,['author','userId'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES));
 
         return data;
     }
@@ -80,7 +156,8 @@ class AccessService extends AuthorService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data],['author','userId']))[0];
+        return (await this.embedAuthorInformation(request,[data],['author','userId'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     update = async(request:Helpers.Request,documentId:string,data) => {
@@ -98,7 +175,8 @@ class AccessService extends AuthorService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data],['author','userId']))[0];
+        return (await this.embedAuthorInformation(request,[data],['author','userId'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     delete = async(request:Helpers.Request,documentId:string) => {
@@ -110,7 +188,8 @@ class AccessService extends AuthorService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data],['author','userId']))[0];
+        return (await this.embedAuthorInformation(request,[data],['author','userId'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
 }

@@ -11,11 +11,8 @@ const validatorMiddleware = new node_library_1.Middlewares.ValidatorMiddleware()
 router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
-    "required": ["queryId", "userId", "status"],
+    "required": ["userId", "status"],
     "properties": {
-        "queryId": {
-            "type": "string"
-        },
         "userId": {
             "type": "string"
         },

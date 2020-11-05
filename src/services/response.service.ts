@@ -70,7 +70,8 @@ class ResponseService extends StatsService {
 
         console.log('query.service','published message');
 
-        return (await this.embedAuthorInformation(request,[data]))[0];
+        return (await this.embedAuthorInformation(request,[data],['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
@@ -95,7 +96,8 @@ class ResponseService extends StatsService {
 
         const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
 
-        data.result = await this.embedAuthorInformation(request,data.result);
+        data.result = await this.embedAuthorInformation(request,data.result,['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES));
 
         return data;
     }
@@ -118,7 +120,8 @@ class ResponseService extends StatsService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data]))[0];
+        return (await this.embedAuthorInformation(request,[data],['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     update = async(request:Helpers.Request,documentId,data) => {
@@ -152,7 +155,8 @@ class ResponseService extends StatsService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data]))[0];
+        return (await this.embedAuthorInformation(request,[data],['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     delete = async(request:Helpers.Request,documentId) => {
@@ -173,7 +177,8 @@ class ResponseService extends StatsService {
             data
         });
 
-        return (await this.embedAuthorInformation(request,[data]))[0];
+        return (await this.embedAuthorInformation(request,[data],['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 }
 

@@ -13,6 +13,11 @@ Content-Type: application/json
 GET http://localhost:4001/api/v1/query/101/response/201/comment
 Content-Type: application/json
 
+
+###
+GET http://localhost:4001/api/v1/query/101/response/201/comment
+Content-Type: application/json
+
 ###
 GET http://localhost:4001/api/v1/query/101/response/201/opinion
 Content-Type: application/json

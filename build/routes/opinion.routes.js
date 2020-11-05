@@ -13,12 +13,6 @@ router.post('/', node_library_1.Middlewares.authCheck(true), validatorMiddleware
     "additionalProperties": false,
     "required": ["opinionType"],
     "properties": {
-        "queryId": {
-            "type": "string"
-        },
-        "responseId": {
-            "type": "string"
-        },
         "body": {
             "type": "string"
         },

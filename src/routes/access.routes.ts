@@ -1,25 +1,20 @@
 import { Router } from 'express';
-import { Middlewares } from 'node-library';
+import { Middlewares, Services } from 'node-library';
 import { AccessController } from '../controllers';
-import { isAuthor } from '../middlewares';
-import { AuthorService } from '../services';
 
 const router = Router()
 
 const controller = new AccessController();
 
-const authorService : AuthorService = <AuthorService> (controller.service);
+const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 
 const validatorMiddleware = new Middlewares.ValidatorMiddleware();
 
 router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
-    "required": ["queryId","userId","status"],
+    "required": ["userId","status"],
     "properties": {
-        "queryId":{
-            "type":"string"
-        },
         "userId":{
             "type":"string"
         },
@@ -37,7 +32,7 @@ router.get('/',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.authCheck(false),controller.get)
 
-router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),validatorMiddleware.validateRequestBody({
+router.put('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
     "required": ["status"],
@@ -52,7 +47,7 @@ router.put('/:id',Middlewares.authCheck(true),isAuthor(authorService),validatorM
     }
 }),controller.update)
 
-router.delete('/:id',Middlewares.authCheck(true),isAuthor(authorService),controller.delete)
+router.delete('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),controller.delete)
 
 
 export default router;

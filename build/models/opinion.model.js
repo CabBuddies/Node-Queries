@@ -14,7 +14,8 @@ const opinionSchema = new mongoose.Schema({
         type: String
     },
     responseId: {
-        type: String
+        type: String,
+        default: 'none'
     },
     opinionType: {
         type: String,

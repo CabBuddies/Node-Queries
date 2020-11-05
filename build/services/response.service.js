@@ -17,13 +17,9 @@ const binder_helper_1 = require("../helpers/binder.helper");
 class ResponseService extends stats_service_1.default {
     constructor() {
         super(new repositories_1.ResponseRepository());
-        this.create = (request, bodyP) => __awaiter(this, void 0, void 0, function* () {
-            console.log('response.service', request, bodyP);
-            const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, bodyP.queryId);
-            console.log('response.service', 'responseIdExists', queryIdExists);
-            if (!queryIdExists)
-                throw this.buildError(404);
-            let data = bodyP;
+        this.create = (request, data) => __awaiter(this, void 0, void 0, function* () {
+            console.log('response.service', request, data);
+            data.queryId = request.raw.params['queryId'];
             data.author = request.getUserId();
             if (data.status === 'published') {
                 data.draft = {
@@ -50,12 +46,25 @@ class ResponseService extends stats_service_1.default {
                 attributes = attributes.filter(function (el) {
                     return exposableAttributes.includes(el);
                 });
+            const queryId = request.raw.params['queryId'];
+            query = {
+                "$and": [
+                    {
+                        "queryId": queryId
+                    },
+                    query
+                ]
+            };
             const data = yield this.repository.getAll(query, sort, pageSize, pageNum, attributes);
             data.result = yield this.embedAuthorInformation(request, data.result);
             return data;
         });
         this.get = (request, documentId, attributes) => __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.repository.get(documentId, attributes);
+            const query = {
+                queryId: request.raw.params['queryId'],
+                _id: documentId
+            };
+            const data = yield this.repository.getOne(query, attributes);
             if (!data)
                 this.buildError(404);
             node_library_1.Services.PubSub.Organizer.publishMessage({
@@ -65,9 +74,12 @@ class ResponseService extends stats_service_1.default {
             });
             return (yield this.embedAuthorInformation(request, [data]))[0];
         });
-        this.update = (request, documentId, bodyP) => __awaiter(this, void 0, void 0, function* () {
-            console.log('response.service', request, bodyP);
-            let data = bodyP;
+        this.update = (request, documentId, data) => __awaiter(this, void 0, void 0, function* () {
+            console.log('response.service', request, data);
+            const query = {
+                queryId: request.raw.params['queryId'],
+                _id: documentId
+            };
             data[data.status].lastModifiedAt = new Date();
             if (data.status === 'published') {
                 data.draft = {
@@ -80,7 +92,7 @@ class ResponseService extends stats_service_1.default {
             }
             //data = Helpers.JSON.normalizeJson(data);
             console.log('response.service', 'db update', data);
-            data = yield this.repository.updatePartial(documentId, data);
+            data = yield this.repository.updateOnePartial(query, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.RESPONSE.UPDATED,
@@ -92,7 +104,11 @@ class ResponseService extends stats_service_1.default {
             let data = {
                 status: 'deleted'
             };
-            data = yield this.repository.updatePartial(documentId, data);
+            const query = {
+                queryId: request.raw.params['queryId'],
+                _id: documentId
+            };
+            data = yield this.repository.updateOnePartial(query, data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.RESPONSE.DELETED,

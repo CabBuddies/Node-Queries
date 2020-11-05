@@ -15,7 +15,8 @@ const commentSchema = new mongoose.Schema({
         type: String
     },
     responseId: {
-        type: String
+        type: String,
+        default: 'none'
     },
     createdAt: {
         type: Date,

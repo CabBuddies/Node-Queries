@@ -13,27 +13,14 @@ const repositories_1 = require("../repositories");
 const node_library_1 = require("node-library");
 const pubsub_helper_1 = require("../helpers/pubsub.helper");
 const author_service_1 = require("./author.service");
-const binder_helper_1 = require("../helpers/binder.helper");
 const helpers_1 = require("node-library/lib/helpers");
 class OpinionService extends author_service_1.default {
     constructor() {
         super(new repositories_1.OpinionRepository());
         this.create = (request, data) => __awaiter(this, void 0, void 0, function* () {
             console.log('opinion.service', request, data);
-            if (data.queryId) {
-                const queryIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, data.queryId);
-                if (!queryIdExists)
-                    throw this.buildError(404, 'queryId not available');
-                delete data.responseId;
-            }
-            else if (data.responseId) {
-                const responseIdExists = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.RESPONSE.CHECK.ID_EXISTS)(request, data.responseId);
-                if (!responseIdExists)
-                    throw this.buildError(404, 'responseId not available');
-            }
-            else {
-                throw this.buildError(400, 'queryId or responseId not provided');
-            }
+            data.queryId = request.raw.params['queryId'];
+            data.responseId = request.raw.params['responseId'] || 'none';
             data.author = request.getUserId();
             let response = yield this.getAll(request, helpers_1.JSON.normalizeJson({
                 author: data.author,
@@ -63,8 +50,15 @@ class OpinionService extends author_service_1.default {
             console.log('opinion.service', 'published message');
             return data;
         });
-        this.delete = (request, entityId) => __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.repository.delete(entityId);
+        this.delete = (request, documentId) => __awaiter(this, void 0, void 0, function* () {
+            const queryId = request.raw.params['queryId'];
+            const responseId = request.raw.params['responseId'] || 'none';
+            const query = {
+                queryId,
+                responseId,
+                _id: documentId
+            };
+            let data = yield this.repository.deleteOne(query);
             node_library_1.Services.PubSub.Organizer.publishMessage({
                 request,
                 type: pubsub_helper_1.PubSubMessageTypes.OPINION.DELETED,

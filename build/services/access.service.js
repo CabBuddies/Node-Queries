@@ -17,15 +17,59 @@ const binder_helper_1 = require("../helpers/binder.helper");
 class AccessService extends author_service_1.default {
     constructor() {
         super(new repositories_1.AccessRepository());
+        this.canUserAccessQuery = (request, userId, queryId) => __awaiter(this, void 0, void 0, function* () {
+            //extract query from database
+            const query = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, queryId);
+            console.log('access.service', 'canUserAccessQuery', 'query', query);
+            if (!query)
+                throw this.buildError(404, 'query not available');
+            //check if the query of queryId is public
+            if (query.access === "public") {
+                console.log('query is public, so you can access it');
+                return true;
+            }
+            //if not
+            //check if the userId exists
+            if (!userId) {
+                console.log('query is not public, so you cant access it without auth');
+                return false;
+            }
+            //if not
+            //if requestor is the query author
+            if (query.author === userId) {
+                console.log('query is not public, but you are its author so you can access it');
+                return true;
+            }
+            //if not
+            //search for access rules that are in this format : {"queryId":queryId,userId:request.getUserId(),"status":"granted"}
+            const _query = {};
+            _query['author'] = query.author;
+            _query['queryId'] = query._id;
+            _query['userId'] = userId;
+            _query['status'] = "granted";
+            const data = yield this.repository.getAll(_query);
+            console.log('query access rules that allow you to read are', data.result);
+            return data.resultTotalSize > 0;
+        });
         this.create = (request, data) => __awaiter(this, void 0, void 0, function* () {
+            //author of the query is trying to "grant/revoked" access to a different user
+            //different user is trying to "request" access to a query
+            data.queryId = request.raw.params['queryId'];
             console.log('access.service', request, data);
             const query = yield node_library_1.Services.Binder.boundFunction(binder_helper_1.BinderNames.QUERY.CHECK.ID_EXISTS)(request, data.queryId);
             console.log('access.service', 'create', 'query', query);
             if (!query)
                 throw this.buildError(404, 'query not available');
-            data.author = request.getUserId();
-            if (query.author !== data.author)
-                throw this.buildError(403, 'query author mismatch');
+            //data.status = "granted"
+            if (data.status === "requested") {
+                data.author = query.author;
+                data.userId = request.getUserId();
+            }
+            else {
+                data.author = request.getUserId();
+                if (query.author !== data.author)
+                    throw this.buildError(403, 'query author mismatch');
+            }
             console.log('access.service', 'db insert', data);
             data = yield this.repository.create(data);
             node_library_1.Services.PubSub.Organizer.publishMessage({
@@ -45,6 +89,7 @@ class AccessService extends author_service_1.default {
                     return exposableAttributes.includes(el);
                 });
             query['author'] = request.getUserId();
+            query['queryId'] = request.raw.params['queryId'];
             const data = yield this.repository.getAll(query, sort, pageSize, pageNum, attributes);
             data.result = yield this.embedAuthorInformation(request, data.result, ['author', 'userId']);
             return data;

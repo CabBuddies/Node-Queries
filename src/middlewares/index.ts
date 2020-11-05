@@ -1,7 +1,5 @@
-import isAuthor from './author.middleware';
-import checkDocumentExists from './document.exists.middleware';
+import canAccessQuery from './query.access.middleware';
 
 export {
-    isAuthor,
-    checkDocumentExists
+    canAccessQuery
 }
