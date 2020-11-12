@@ -28,7 +28,7 @@ router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestB
     }
 }),controller.create)
 
-router.get('/',Middlewares.authCheck(false),controller.getAll)
+router.post('/search',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.authCheck(false),controller.get)
 

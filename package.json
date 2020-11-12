@@ -8,7 +8,8 @@
     "start": "nodemon -x ts-node ./src/index.ts",
     "test": "mocha -r ts-node/register src/test/**/*.test.ts --timeout 60000",
     "rebuild": "npm prune | npm update | npm run build | npm install",
-    "refresh": "npm run rebuild | npm start"
+    "refresh": "npm run rebuild | npm start",
+    "refresh-nl": "npm uninstall node-library && npm install nihalkondasjsu/Node-Library.git#master && npm start"
   },
   "keywords": [],
   "author": "",
