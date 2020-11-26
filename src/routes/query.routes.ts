@@ -69,15 +69,15 @@ router.param('id',Middlewares.addParamToRequest());
 
 router.param('queryId',Middlewares.addParamToRequest());
 
-router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody(schema),controller.create)
+router.post('/',Middlewares.authCheck(true,true),validatorMiddleware.validateRequestBody(schema),controller.create)
 
 router.post('/search',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.checkDocumentExists(authorService,'id'),canAccessQuery('id'),Middlewares.authCheck(false),controller.get)
 
-router.put('/:id',Middlewares.checkDocumentExists(authorService,'id'),Middlewares.authCheck(true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody(schema),controller.update)
+router.put('/:id',Middlewares.checkDocumentExists(authorService,'id'),Middlewares.authCheck(true,true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody(schema),controller.update)
 
-router.delete('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),controller.delete)
+router.delete('/:id',Middlewares.authCheck(true,true),Middlewares.isAuthor(authorService),controller.delete)
 
 const queryExists = Middlewares.checkDocumentExists(authorService,'queryId');
 

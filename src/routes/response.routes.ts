@@ -18,11 +18,8 @@ const validatorMiddleware = new Middlewares.ValidatorMiddleware([
         "id": "/contentSchema",
         "type": "object",
         "additionalProperties": false,
-        "minProperties": 4,  
+        "minProperties": 3,  
         "properties": {
-            "_id": {
-                "type": "string"
-            },
             "title": {
                 "type": "string"
             },
@@ -43,7 +40,7 @@ const validatorMiddleware = new Middlewares.ValidatorMiddleware([
 const schema = {
     "type": "object",
     "additionalProperties": false,
-    "required": ["queryId","draft","published","status"],
+    "required": ["draft","published","status"],
     "properties": {
         "draft": {
             "$ref": "/contentSchema"
