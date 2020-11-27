@@ -10,4 +10,4 @@ class ResponseController extends Controllers.BaseController{
     }
 
 }
-export default ResponseController;
+export default new ResponseController();

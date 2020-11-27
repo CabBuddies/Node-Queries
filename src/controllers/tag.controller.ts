@@ -11,4 +11,4 @@ class TagController extends Controllers.BaseController{
     }
 
 }
-export default TagController;
+export default new TagController();

@@ -8,7 +8,7 @@ import OpinionRouter from './opinion.routes';
 
 const router = Router()
 
-const controller = new ResponseController();
+const controller = ResponseController;
 
 const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 

@@ -67,6 +67,48 @@ class OpinionService extends Services.AuthorService {
     }
 
 
+    getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
+        const exposableAttributes = ['author','queryId','responseId','body','createdAt','opinionType'];
+        if(attributes.length === 0)
+            attributes = exposableAttributes;
+        else
+            attributes = attributes.filter( function( el:string ) {
+                return exposableAttributes.includes( el );
+            });
+
+        let restrictions = {};
+
+        const queryId = request.raw.params['queryId'];
+        const responseId = request.raw.params['responseId']||'none';
+
+        if(queryId && responseId){
+            restrictions = {
+                $and:[
+                    {"queryId":queryId},
+                    {"responseId":responseId}
+                ]
+            }
+        }else if(request.isUserAuthenticated()){
+            restrictions = {"author":request.getUserId()};
+        }else{
+            this.buildError(404);
+        }
+
+        query = {
+            "$and":[
+                query,
+                restrictions
+            ]
+        };    
+
+        const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
+
+        data.result = await this.embedAuthorInformation(request,data.result,['author'],
+        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES));
+
+        return data;
+    }
+
     delete = async(request:Helpers.Request,documentId) => {
         const queryId = request.raw.params['queryId'];
         const responseId = request.raw.params['responseId']||'none';

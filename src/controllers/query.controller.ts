@@ -10,4 +10,4 @@ class QueryController extends Controllers.BaseController{
     }
 
 }
-export default QueryController;
+export default new QueryController();

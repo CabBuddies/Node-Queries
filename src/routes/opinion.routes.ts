@@ -4,7 +4,7 @@ import { OpinionController } from '../controllers';
 
 const router = Router()
 
-const controller = new OpinionController();
+const controller = OpinionController;
 
 const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 

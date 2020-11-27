@@ -8,4 +8,4 @@ class CommentController extends Controllers.BaseController{
     }
 
 }
-export default CommentController;
+export default new CommentController();

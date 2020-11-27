@@ -75,7 +75,7 @@ class ResponseService extends StatsService {
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
-        const exposableAttributes = ['author','queryId','published.title','published.tags','published.lastModifiedAt','createdAt','status','stats','access.type'];
+        const exposableAttributes = ['author','queryId','published.title','published.body','published.tags','published.lastModifiedAt','createdAt','status','stats','access.type'];
         if(attributes.length === 0)
             attributes = exposableAttributes;
         else
@@ -83,14 +83,21 @@ class ResponseService extends StatsService {
                 return exposableAttributes.includes( el );
             });
 
-        const queryId = request.raw.params['queryId'];
+
+        let restrictions = {};
+
+        if(request.raw.params['queryId']){
+            restrictions = {"queryId":request.raw.params['queryId']};
+        }else if(request.isUserAuthenticated()){
+            restrictions = {"author":request.getUserId()};
+        }else {
+            this.buildError(404);
+        }
 
         query = {
-            "$and":[
-                {
-                    "queryId":queryId
-                },
-                query
+            $and:[
+                query,
+                restrictions
             ]
         };
 

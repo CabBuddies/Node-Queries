@@ -54,12 +54,30 @@ class CommentService extends Services.AuthorService {
                 return exposableAttributes.includes( el );
             });
 
+        let restrictions = {};
+
         const queryId = request.raw.params['queryId'];
         const responseId = request.raw.params['responseId']||'none';
 
+        if(queryId && responseId){
+            restrictions = {
+                $and:[
+                    {"queryId":queryId},
+                    {"responseId":responseId}
+                ]
+            }
+        }else if(request.isUserAuthenticated()){
+            restrictions = {
+                "author":request.getUserId()
+            };
+        }else{
+            this.buildError(404);
+        }
+
         query = {
             "$and":[
-                query,{"queryId":queryId},{"responseId":responseId}
+                query,
+                restrictions
             ]
         };    
 

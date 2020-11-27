@@ -111,6 +111,20 @@ class QueryService extends StatsService {
                 return exposableAttributes.includes( el );
             });
         
+        
+        let restrictions = {};
+
+        if(request.raw.params['userId'] && request.isUserAuthenticated()){
+            restrictions = {"author":request.getUserId()};
+        }
+
+        query = {
+            $and:[
+                query,
+                restrictions
+            ]
+        };
+
         const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
 
         data.result = await this.embedAuthorInformation(request,data.result,['author'],

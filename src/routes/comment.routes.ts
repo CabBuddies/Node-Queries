@@ -4,7 +4,7 @@ import { CommentController } from '../controllers';
 
 const router = Router()
 
-const controller = new CommentController();
+const controller = CommentController;
 
 const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 

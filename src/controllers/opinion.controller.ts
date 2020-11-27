@@ -11,4 +11,4 @@ class OpinionController extends Controllers.BaseController{
     }
 
 }
-export default OpinionController;
+export default new OpinionController();

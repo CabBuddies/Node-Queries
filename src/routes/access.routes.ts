@@ -4,7 +4,7 @@ import { AccessController } from '../controllers';
 
 const router = Router()
 
-const controller = new AccessController();
+const controller = AccessController;
 
 const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 

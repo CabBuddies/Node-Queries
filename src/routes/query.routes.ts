@@ -12,7 +12,7 @@ import canAccessQuery from '../middlewares/query.access.middleware';
 
 const router = Router()
 
-const controller = new QueryController();
+const controller = QueryController;
 
 const authorService : Services.AuthorService = <Services.AuthorService> (controller.service);
 

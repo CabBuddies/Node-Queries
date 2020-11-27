@@ -13,6 +13,7 @@ function startServer(){
     // router.use('/response',routes.ResponseRoutes);
     // router.use('/comment',routes.CommentRoutes);
     router.use('/tag',routes.TagRoutes);
+    router.use('/user',routes.UserRoutes);
     // router.use('/opinion',routes.OpinionRoutes);
     
     app.use('/api/v1',router);

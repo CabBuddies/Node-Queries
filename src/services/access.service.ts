@@ -131,9 +131,42 @@ class AccessService extends Services.AuthorService {
             attributes = attributes.filter( function( el:string ) {
                 return exposableAttributes.includes( el );
             });
-        
-        query['author'] = request.getUserId();
-        query['queryId'] = request.raw.params['queryId'];
+
+        let restriction = {};
+
+        if(request.raw.params['queryId']){
+            //WHERE (p.userId = author OR p.userId = userId) AND p.queryId = queryId
+            restriction = {
+                $and:[
+                    {
+                        "queryId":request.raw.params['queryId']
+                    },
+                    {
+                        $or:[
+                            {"author":request.getUserId()},
+                            {"userId":request.getUserId()}
+                        ]
+                    }
+                ]
+            }
+        }else if(request.isUserAuthenticated()){
+            //WHERE p.userId = author OR p.userId = userId
+            restriction = {
+                $or:[
+                    {"author":request.getUserId()},
+                    {"userId":request.getUserId()}
+                ]
+            }
+        }else{
+            throw this.buildError(404);
+        }
+
+        query = {
+            $and:[
+                query,
+                restriction
+            ]
+        };
 
         const data = await this.repository.getAll(query,sort,pageSize,pageNum,attributes);
 

@@ -8,4 +8,4 @@ class AccessController extends Controllers.BaseController{
     }
 
 }
-export default AccessController;
+export default new AccessController();
