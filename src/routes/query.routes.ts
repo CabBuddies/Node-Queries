@@ -56,7 +56,7 @@ const schema = {
         },
         "status":{
             "type":"string",
-            "enum":["draft","published","deleted"]
+            "enum":["draft","published"]
         },
         "access":{
             "type":"string",

@@ -10,7 +10,7 @@ const authorService : Services.AuthorService = <Services.AuthorService> (control
 
 const validatorMiddleware = new Middlewares.ValidatorMiddleware();
 
-router.post('/',Middlewares.authCheck(true),validatorMiddleware.validateRequestBody({
+router.post('/',Middlewares.authCheck(true,true),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
     "required": ["userId","status"],
@@ -32,7 +32,7 @@ router.post('/search',Middlewares.authCheck(false),controller.getAll)
 
 router.get('/:id',Middlewares.authCheck(false),controller.get)
 
-router.put('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody({
+router.put('/:id',Middlewares.authCheck(true,true),Middlewares.isAuthor(authorService),validatorMiddleware.validateRequestBody({
     "type": "object",
     "additionalProperties": false,
     "required": ["status"],
@@ -47,7 +47,7 @@ router.put('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService
     }
 }),controller.update)
 
-router.delete('/:id',Middlewares.authCheck(true),Middlewares.isAuthor(authorService),controller.delete)
+router.delete('/:id',Middlewares.authCheck(true,true),Middlewares.isAuthor(authorService),controller.delete)
 
 
 export default router;
