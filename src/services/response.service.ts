@@ -52,7 +52,8 @@ class ResponseService extends StatsService {
         if(data.status === 'published'){
             data.draft = {
                 title:'',
-                body:''
+                body:'',
+                media:[]
             };
         }
 
@@ -144,7 +145,8 @@ class ResponseService extends StatsService {
         if(data.status === 'published'){
             data.draft = {
                 title:'',
-                body:''
+                body:'',
+                media:[]
             };
         }else{
             delete data.status

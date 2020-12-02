@@ -11,6 +11,9 @@ const contentSchema = new mongoose.Schema({
         required: 'body is required',
         minimize:false
     },
+    media:[{
+        type:String
+    }],
     tags:[
         String
     ],

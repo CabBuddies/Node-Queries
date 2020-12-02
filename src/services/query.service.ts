@@ -80,6 +80,7 @@ class QueryService extends StatsService {
             data.draft = {
                 title:'',
                 body:'',
+                media:[],
                 tags:[]
             };
         }
@@ -99,7 +100,7 @@ class QueryService extends StatsService {
         console.log('query.service','published message');
 
         return (await this.embedAuthorInformation(request,[data],['author'],
-        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
+            Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     getAll = async(request:Helpers.Request, query = {}, sort = {}, pageSize:number = 5, pageNum:number = 1, attributes:string[] = []) => {
@@ -161,6 +162,7 @@ class QueryService extends StatsService {
             data.draft = {
                 title:'',
                 body:'',
+                media:[],
                 tags:[]
             };
         }else{
@@ -180,7 +182,7 @@ class QueryService extends StatsService {
         });
 
         return (await this.embedAuthorInformation(request,[data],['author'],
-        Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
+            Services.Binder.boundFunction(BinderNames.USER.EXTRACT.USER_PROFILES)))[0];
     }
 
     delete = async(request:Helpers.Request,documentId:string) => {

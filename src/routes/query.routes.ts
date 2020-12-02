@@ -21,13 +21,20 @@ const validatorMiddleware = new Middlewares.ValidatorMiddleware([
         "id": "/contentSchema",
         "type": "object",
         "additionalProperties": false,
-        "required": ["title","body","tags"],  
+        "required": ["title","body","media","tags"],  
         "properties": {
             "title": {
                 "type": "string"
             },
             "body": {
                 "type": "string"
+            },
+            "media": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string"
+                }
             },
             "tags": {
                 "type": "array",
